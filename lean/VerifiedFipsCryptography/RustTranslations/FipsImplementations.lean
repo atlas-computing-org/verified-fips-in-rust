@@ -980,4 +980,932 @@ def algorithms.aes.aes256_inv
   let s1 := alloc.vec.DerefVec.deref key_schedule
   algorithms.aes.inv_cipher input s1 14#usize
 
+/- [fips_implementations::algorithms::sha1::u32x4]
+   Source: 'src/algorithms/sha1.rs', lines 9:0-9:53 -/
+def algorithms.sha1.u32x4 := U32 × U32 × U32 × U32
+
+/- [fips_implementations::algorithms::sha1::{core::clone::Clone for fips_implementations::algorithms::sha1::u32x4}#9::clone]:
+   Source: 'src/algorithms/sha1.rs', lines 7:9-7:14 -/
+def algorithms.sha1.Clonefips_implementationsalgorithmssha1u32x4.clone
+  (self : algorithms.sha1.u32x4) : Result algorithms.sha1.u32x4 :=
+  Result.ok self
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::clone::Clone for fips_implementations::algorithms::sha1::u32x4}#9]
+   Source: 'src/algorithms/sha1.rs', lines 7:9-7:14 -/
+@[reducible]
+def core.clone.Clonefips_implementationsalgorithmssha1u32x4 : core.clone.Clone
+  algorithms.sha1.u32x4 := {
+  clone := algorithms.sha1.Clonefips_implementationsalgorithmssha1u32x4.clone
+}
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::marker::Copy for fips_implementations::algorithms::sha1::u32x4}#10]
+   Source: 'src/algorithms/sha1.rs', lines 7:16-7:20 -/
+@[reducible]
+def core.marker.Copyfips_implementationsalgorithmssha1u32x4 : core.marker.Copy
+  algorithms.sha1.u32x4 := {
+  cloneInst := core.clone.Clonefips_implementationsalgorithmssha1u32x4
+}
+
+/- Trait declaration: [core::ops::arith::Add]
+   Source: '/rustc/library/core/src/ops/arith.rs', lines 76:0-76:25
+   Name pattern: core::ops::arith::Add -/
+structure core.ops.arith.Add (Self : Type) (Rhs : Type) where
+  Output : Type
+  add : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::arith::Add<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}::add]:
+   Source: 'src/algorithms/sha1.rs', lines 14:4-21:5 -/
+def
+  algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  let i8 := core.num.u32.wrapping_add i i4
+  let i9 := core.num.u32.wrapping_add i1 i5
+  let i10 := core.num.u32.wrapping_add i2 i6
+  let i11 := core.num.u32.wrapping_add i3 i7
+  Result.ok (i8, i9, i10, i11)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::arith::Add<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}]
+   Source: 'src/algorithms/sha1.rs', lines 11:0-22:1 -/
+@[reducible]
+def
+  core.ops.arith.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.arith.Add algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  add :=
+    algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+}
+
+/- Trait declaration: [core::ops::arith::Sub]
+   Source: '/rustc/library/core/src/ops/arith.rs', lines 185:0-185:25
+   Name pattern: core::ops::arith::Sub -/
+structure core.ops.arith.Sub (Self : Type) (Rhs : Type) where
+  Output : Type
+  sub : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::arith::Sub<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#1::sub]:
+   Source: 'src/algorithms/sha1.rs', lines 27:4-34:5 -/
+def
+  algorithms.sha1.Subfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.sub
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  let i8 := core.num.u32.wrapping_sub i i4
+  let i9 := core.num.u32.wrapping_sub i1 i5
+  let i10 := core.num.u32.wrapping_sub i2 i6
+  let i11 := core.num.u32.wrapping_sub i3 i7
+  Result.ok (i8, i9, i10, i11)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::arith::Sub<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#1]
+   Source: 'src/algorithms/sha1.rs', lines 24:0-35:1 -/
+@[reducible]
+def
+  core.ops.arith.Subfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.arith.Sub algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  sub :=
+    algorithms.sha1.Subfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.sub
+}
+
+/- Trait declaration: [core::ops::bit::BitAnd]
+   Source: '/rustc/library/core/src/ops/bit.rs', lines 144:0-144:28
+   Name pattern: core::ops::bit::BitAnd -/
+structure core.ops.bit.BitAnd (Self : Type) (Rhs : Type) where
+  Output : Type
+  bitand : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::BitAnd<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#2::bitand]:
+   Source: 'src/algorithms/sha1.rs', lines 40:4-47:5 -/
+def
+  algorithms.sha1.BitAndfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitand
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  Result.ok (i &&& i4, i1 &&& i5, i2 &&& i6, i3 &&& i7)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::BitAnd<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#2]
+   Source: 'src/algorithms/sha1.rs', lines 37:0-48:1 -/
+@[reducible]
+def
+  core.ops.bit.BitAndfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.bit.BitAnd algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  bitand :=
+    algorithms.sha1.BitAndfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitand
+}
+
+/- Trait declaration: [core::ops::bit::BitOr]
+   Source: '/rustc/library/core/src/ops/bit.rs', lines 244:0-244:27
+   Name pattern: core::ops::bit::BitOr -/
+structure core.ops.bit.BitOr (Self : Type) (Rhs : Type) where
+  Output : Type
+  bitor : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::BitOr<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#3::bitor]:
+   Source: 'src/algorithms/sha1.rs', lines 53:4-60:5 -/
+def
+  algorithms.sha1.BitOrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitor
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  Result.ok (i ||| i4, i1 ||| i5, i2 ||| i6, i3 ||| i7)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::BitOr<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#3]
+   Source: 'src/algorithms/sha1.rs', lines 50:0-61:1 -/
+@[reducible]
+def
+  core.ops.bit.BitOrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.bit.BitOr algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  bitor :=
+    algorithms.sha1.BitOrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitor
+}
+
+/- Trait declaration: [core::ops::bit::BitXor]
+   Source: '/rustc/library/core/src/ops/bit.rs', lines 344:0-344:28
+   Name pattern: core::ops::bit::BitXor -/
+structure core.ops.bit.BitXor (Self : Type) (Rhs : Type) where
+  Output : Type
+  bitxor : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::BitXor<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#4::bitxor]:
+   Source: 'src/algorithms/sha1.rs', lines 66:4-73:5 -/
+def
+  algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  Result.ok (i ^^^ i4, i1 ^^^ i5, i2 ^^^ i6, i3 ^^^ i7)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::BitXor<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#4]
+   Source: 'src/algorithms/sha1.rs', lines 63:0-74:1 -/
+@[reducible]
+def
+  core.ops.bit.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.bit.BitXor algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  bitxor :=
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+}
+
+/- Trait declaration: [core::ops::bit::Shl]
+   Source: '/rustc/library/core/src/ops/bit.rs', lines 443:0-443:25
+   Name pattern: core::ops::bit::Shl -/
+structure core.ops.bit.Shl (Self : Type) (Rhs : Type) where
+  Output : Type
+  shl : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::Shl<usize> for fips_implementations::algorithms::sha1::u32x4}#5::shl]:
+   Source: 'src/algorithms/sha1.rs', lines 79:4-81:5 -/
+def algorithms.sha1.Shlfips_implementationsalgorithmssha1u32x4Usize.shl
+  (self : algorithms.sha1.u32x4) (amt : Usize) :
+  Result algorithms.sha1.u32x4
+  :=
+  do
+  let (i, i1, i2, i3) := self
+  let i4 ← i <<< amt
+  let i5 ← i1 <<< amt
+  let i6 ← i2 <<< amt
+  let i7 ← i3 <<< amt
+  Result.ok (i4, i5, i6, i7)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::Shl<usize> for fips_implementations::algorithms::sha1::u32x4}#5]
+   Source: 'src/algorithms/sha1.rs', lines 76:0-82:1 -/
+@[reducible]
+def core.ops.bit.Shlfips_implementationsalgorithmssha1u32x4Usize :
+  core.ops.bit.Shl algorithms.sha1.u32x4 Usize := {
+  Output := algorithms.sha1.u32x4
+  shl := algorithms.sha1.Shlfips_implementationsalgorithmssha1u32x4Usize.shl
+}
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::Shl<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#6::shl]:
+   Source: 'src/algorithms/sha1.rs', lines 87:4-94:5 -/
+def
+  algorithms.sha1.Shlfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.shl
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  do
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  let i8 ← i <<< i4
+  let i9 ← i1 <<< i5
+  let i10 ← i2 <<< i6
+  let i11 ← i3 <<< i7
+  Result.ok (i8, i9, i10, i11)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::Shl<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#6]
+   Source: 'src/algorithms/sha1.rs', lines 84:0-95:1 -/
+@[reducible]
+def
+  core.ops.bit.Shlfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.bit.Shl algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  shl :=
+    algorithms.sha1.Shlfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.shl
+}
+
+/- Trait declaration: [core::ops::bit::Shr]
+   Source: '/rustc/library/core/src/ops/bit.rs', lines 561:0-561:25
+   Name pattern: core::ops::bit::Shr -/
+structure core.ops.bit.Shr (Self : Type) (Rhs : Type) where
+  Output : Type
+  shr : Self → Rhs → Result Output
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::Shr<usize> for fips_implementations::algorithms::sha1::u32x4}#7::shr]:
+   Source: 'src/algorithms/sha1.rs', lines 100:4-102:5 -/
+def algorithms.sha1.Shrfips_implementationsalgorithmssha1u32x4Usize.shr
+  (self : algorithms.sha1.u32x4) (amt : Usize) :
+  Result algorithms.sha1.u32x4
+  :=
+  do
+  let (i, i1, i2, i3) := self
+  let i4 ← i >>> amt
+  let i5 ← i1 >>> amt
+  let i6 ← i2 >>> amt
+  let i7 ← i3 >>> amt
+  Result.ok (i4, i5, i6, i7)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::Shr<usize> for fips_implementations::algorithms::sha1::u32x4}#7]
+   Source: 'src/algorithms/sha1.rs', lines 97:0-103:1 -/
+@[reducible]
+def core.ops.bit.Shrfips_implementationsalgorithmssha1u32x4Usize :
+  core.ops.bit.Shr algorithms.sha1.u32x4 Usize := {
+  Output := algorithms.sha1.u32x4
+  shr := algorithms.sha1.Shrfips_implementationsalgorithmssha1u32x4Usize.shr
+}
+
+/- [fips_implementations::algorithms::sha1::{core::ops::bit::Shr<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#8::shr]:
+   Source: 'src/algorithms/sha1.rs', lines 108:4-115:5 -/
+def
+  algorithms.sha1.Shrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.shr
+  (self : algorithms.sha1.u32x4) (rhs : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  do
+  let (i, i1, i2, i3) := self
+  let (i4, i5, i6, i7) := rhs
+  let i8 ← i >>> i4
+  let i9 ← i1 >>> i5
+  let i10 ← i2 >>> i6
+  let i11 ← i3 >>> i7
+  Result.ok (i8, i9, i10, i11)
+
+/- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::bit::Shr<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#8]
+   Source: 'src/algorithms/sha1.rs', lines 105:0-116:1 -/
+@[reducible]
+def
+  core.ops.bit.Shrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4
+  : core.ops.bit.Shr algorithms.sha1.u32x4 algorithms.sha1.u32x4 := {
+  Output := algorithms.sha1.u32x4
+  shr :=
+    algorithms.sha1.Shrfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.shr
+}
+
+/- [fips_implementations::algorithms::sha1::INITIAL_STATE]
+   Source: 'src/algorithms/sha1.rs', lines 139:0-139:93 -/
+def algorithms.sha1.INITIAL_STATE_body : Result (Array U32 5#usize) :=
+  Result.ok
+  (Array.make 5#usize [
+    1732584193#u32, 4023233417#u32, 2562383102#u32, 271733878#u32,
+    3285377520#u32
+    ])
+def algorithms.sha1.INITIAL_STATE : Array U32 5#usize :=
+  eval_global algorithms.sha1.INITIAL_STATE_body
+
+/- [fips_implementations::algorithms::sha1::CHUNK_SIZE]
+   Source: 'src/algorithms/sha1.rs', lines 142:0-142:29 -/
+def algorithms.sha1.CHUNK_SIZE_body : Result Usize := Result.ok 64#usize
+def algorithms.sha1.CHUNK_SIZE : Usize :=
+  eval_global algorithms.sha1.CHUNK_SIZE_body
+
+/- [fips_implementations::algorithms::sha1::K0]
+   Source: 'src/algorithms/sha1.rs', lines 145:0-145:30 -/
+def algorithms.sha1.K0_body : Result U32 := Result.ok 1518500249#u32
+def algorithms.sha1.K0 : U32 := eval_global algorithms.sha1.K0_body
+
+/- [fips_implementations::algorithms::sha1::K1]
+   Source: 'src/algorithms/sha1.rs', lines 146:0-146:30 -/
+def algorithms.sha1.K1_body : Result U32 := Result.ok 1859775393#u32
+def algorithms.sha1.K1 : U32 := eval_global algorithms.sha1.K1_body
+
+/- [fips_implementations::algorithms::sha1::K2]
+   Source: 'src/algorithms/sha1.rs', lines 147:0-147:30 -/
+def algorithms.sha1.K2_body : Result U32 := Result.ok 2400959708#u32
+def algorithms.sha1.K2 : U32 := eval_global algorithms.sha1.K2_body
+
+/- [fips_implementations::algorithms::sha1::K3]
+   Source: 'src/algorithms/sha1.rs', lines 148:0-148:30 -/
+def algorithms.sha1.K3_body : Result U32 := Result.ok 3395469782#u32
+def algorithms.sha1.K3 : U32 := eval_global algorithms.sha1.K3_body
+
+/- [fips_implementations::algorithms::sha1::sha1_first]:
+   Source: 'src/algorithms/sha1.rs', lines 152:0-154:1 -/
+def algorithms.sha1.sha1_first (w0 : algorithms.sha1.u32x4) : Result U32 :=
+  let (i, _, _, _) := w0
+  Result.ok i
+
+/- [fips_implementations::algorithms::sha1::sha1_first_add]:
+   Source: 'src/algorithms/sha1.rs', lines 158:0-161:1 -/
+def algorithms.sha1.sha1_first_add
+  (e : U32) (w0 : algorithms.sha1.u32x4) : Result algorithms.sha1.u32x4 :=
+  let (a, b, c, d) := w0
+  let i := core.num.u32.wrapping_add e a
+  Result.ok (i, b, c, d)
+
+/- [fips_implementations::algorithms::sha1::sha1msg1]:
+   Source: 'src/algorithms/sha1.rs', lines 164:0-168:1 -/
+def algorithms.sha1.sha1msg1
+  (a : algorithms.sha1.u32x4) (b : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (_, _, w2, w3) := a
+  let (w4, w5, _, _) := b
+  algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+    a (w2, w3, w4, w5)
+
+/- [fips_implementations::algorithms::sha1::sha1msg2]:
+   Source: 'src/algorithms/sha1.rs', lines 171:0-181:1 -/
+def algorithms.sha1.sha1msg2
+  (a : algorithms.sha1.u32x4) (b : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (x0, x1, x2, x3) := a
+  let (_, w13, w14, w15) := b
+  let w16 := core.num.u32.rotate_left (x0 ^^^ w13) 1#u32
+  let w17 := core.num.u32.rotate_left (x1 ^^^ w14) 1#u32
+  let w18 := core.num.u32.rotate_left (x2 ^^^ w15) 1#u32
+  let w19 := core.num.u32.rotate_left (x3 ^^^ w16) 1#u32
+  Result.ok (w16, w17, w18, w19)
+
+/- [fips_implementations::algorithms::sha1::sha1_first_half]:
+   Source: 'src/algorithms/sha1.rs', lines 185:0-187:1 -/
+def algorithms.sha1.sha1_first_half
+  (abcd : algorithms.sha1.u32x4) (msg : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  do
+  let i ← algorithms.sha1.sha1_first abcd
+  let i1 := core.num.u32.rotate_left i 30#u32
+  algorithms.sha1.sha1_first_add i1 msg
+
+/- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K0V]
+   Source: 'src/algorithms/sha1.rs', lines 192:4-192:45 -/
+def algorithms.sha1.sha1_digest_round_x4.K0V_body
+  : Result algorithms.sha1.u32x4 :=
+  Result.ok
+  (algorithms.sha1.K0,
+  algorithms.sha1.K0,
+  algorithms.sha1.K0,
+  algorithms.sha1.K0)
+def algorithms.sha1.sha1_digest_round_x4.K0V : algorithms.sha1.u32x4 :=
+  eval_global algorithms.sha1.sha1_digest_round_x4.K0V_body
+
+/- [fips_implementations::algorithms::sha1::sha1rnds4c]:
+   Source: 'src/algorithms/sha1.rs', lines 207:0-243:1 -/
+def algorithms.sha1.sha1rnds4c
+  (abcd : algorithms.sha1.u32x4) (msg : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (a, b, c, d) := abcd
+  let (t, u, v, w) := msg
+  let i := core.num.u32.rotate_left a 5#u32
+  let i1 := core.num.u32.wrapping_add 0#u32 i
+  let i2 := core.num.u32.wrapping_add i1 (d ^^^ b &&& c ^^^ d)
+  let e := core.num.u32.wrapping_add i2 t
+  let b1 := core.num.u32.rotate_left b 30#u32
+  let i3 := core.num.u32.rotate_left e 5#u32
+  let i4 := core.num.u32.wrapping_add d i3
+  let i5 := core.num.u32.wrapping_add i4 (c ^^^ a &&& b1 ^^^ c)
+  let d1 := core.num.u32.wrapping_add i5 u
+  let a1 := core.num.u32.rotate_left a 30#u32
+  let i6 := core.num.u32.rotate_left d1 5#u32
+  let i7 := core.num.u32.wrapping_add c i6
+  let i8 := core.num.u32.wrapping_add i7 (b1 ^^^ e &&& a1 ^^^ b1)
+  let c1 := core.num.u32.wrapping_add i8 v
+  let e1 := core.num.u32.rotate_left e 30#u32
+  let i9 := core.num.u32.rotate_left c1 5#u32
+  let i10 := core.num.u32.wrapping_add b1 i9
+  let i11 := core.num.u32.wrapping_add i10 (a1 ^^^ d1 &&& e1 ^^^ a1)
+  let b2 := core.num.u32.wrapping_add i11 w
+  let d2 := core.num.u32.rotate_left d1 30#u32
+  Result.ok (b2, c1, d2, e1)
+
+/- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K1V]
+   Source: 'src/algorithms/sha1.rs', lines 193:4-193:45 -/
+def algorithms.sha1.sha1_digest_round_x4.K1V_body
+  : Result algorithms.sha1.u32x4 :=
+  Result.ok
+  (algorithms.sha1.K1,
+  algorithms.sha1.K1,
+  algorithms.sha1.K1,
+  algorithms.sha1.K1)
+def algorithms.sha1.sha1_digest_round_x4.K1V : algorithms.sha1.u32x4 :=
+  eval_global algorithms.sha1.sha1_digest_round_x4.K1V_body
+
+/- [fips_implementations::algorithms::sha1::sha1rnds4p]:
+   Source: 'src/algorithms/sha1.rs', lines 246:0-282:1 -/
+def algorithms.sha1.sha1rnds4p
+  (abcd : algorithms.sha1.u32x4) (msg : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (a, b, c, d) := abcd
+  let (t, u, v, w) := msg
+  let i := core.num.u32.rotate_left a 5#u32
+  let i1 := core.num.u32.wrapping_add 0#u32 i
+  let i2 := core.num.u32.wrapping_add i1 (b ^^^ c ^^^ d)
+  let e := core.num.u32.wrapping_add i2 t
+  let b1 := core.num.u32.rotate_left b 30#u32
+  let i3 := core.num.u32.rotate_left e 5#u32
+  let i4 := core.num.u32.wrapping_add d i3
+  let i5 := core.num.u32.wrapping_add i4 (a ^^^ b1 ^^^ c)
+  let d1 := core.num.u32.wrapping_add i5 u
+  let a1 := core.num.u32.rotate_left a 30#u32
+  let i6 := core.num.u32.rotate_left d1 5#u32
+  let i7 := core.num.u32.wrapping_add c i6
+  let i8 := core.num.u32.wrapping_add i7 (e ^^^ a1 ^^^ b1)
+  let c1 := core.num.u32.wrapping_add i8 v
+  let e1 := core.num.u32.rotate_left e 30#u32
+  let i9 := core.num.u32.rotate_left c1 5#u32
+  let i10 := core.num.u32.wrapping_add b1 i9
+  let i11 := core.num.u32.wrapping_add i10 (d1 ^^^ e1 ^^^ a1)
+  let b2 := core.num.u32.wrapping_add i11 w
+  let d2 := core.num.u32.rotate_left d1 30#u32
+  Result.ok (b2, c1, d2, e1)
+
+/- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K2V]
+   Source: 'src/algorithms/sha1.rs', lines 194:4-194:45 -/
+def algorithms.sha1.sha1_digest_round_x4.K2V_body
+  : Result algorithms.sha1.u32x4 :=
+  Result.ok
+  (algorithms.sha1.K2,
+  algorithms.sha1.K2,
+  algorithms.sha1.K2,
+  algorithms.sha1.K2)
+def algorithms.sha1.sha1_digest_round_x4.K2V : algorithms.sha1.u32x4 :=
+  eval_global algorithms.sha1.sha1_digest_round_x4.K2V_body
+
+/- [fips_implementations::algorithms::sha1::sha1rnds4m]:
+   Source: 'src/algorithms/sha1.rs', lines 285:0-321:1 -/
+def algorithms.sha1.sha1rnds4m
+  (abcd : algorithms.sha1.u32x4) (msg : algorithms.sha1.u32x4) :
+  Result algorithms.sha1.u32x4
+  :=
+  let (a, b, c, d) := abcd
+  let (t, u, v, w) := msg
+  let i := core.num.u32.rotate_left a 5#u32
+  let i1 := core.num.u32.wrapping_add 0#u32 i
+  let i2 := core.num.u32.wrapping_add i1 (b &&& c ^^^ b &&& d ^^^ c &&& d)
+  let e := core.num.u32.wrapping_add i2 t
+  let b1 := core.num.u32.rotate_left b 30#u32
+  let i3 := core.num.u32.rotate_left e 5#u32
+  let i4 := core.num.u32.wrapping_add d i3
+  let i5 := core.num.u32.wrapping_add i4 (a &&& b1 ^^^ a &&& c ^^^ b1 &&& c)
+  let d1 := core.num.u32.wrapping_add i5 u
+  let a1 := core.num.u32.rotate_left a 30#u32
+  let i6 := core.num.u32.rotate_left d1 5#u32
+  let i7 := core.num.u32.wrapping_add c i6
+  let i8 := core.num.u32.wrapping_add i7 (e &&& a1 ^^^ e &&& b1 ^^^ a1 &&& b1)
+  let c1 := core.num.u32.wrapping_add i8 v
+  let e1 := core.num.u32.rotate_left e 30#u32
+  let i9 := core.num.u32.rotate_left c1 5#u32
+  let i10 := core.num.u32.wrapping_add b1 i9
+  let i11 :=
+    core.num.u32.wrapping_add i10 (d1 &&& e1 ^^^ d1 &&& a1 ^^^ e1 &&& a1)
+  let b2 := core.num.u32.wrapping_add i11 w
+  let d2 := core.num.u32.rotate_left d1 30#u32
+  Result.ok (b2, c1, d2, e1)
+
+/- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K3V]
+   Source: 'src/algorithms/sha1.rs', lines 195:4-195:45 -/
+def algorithms.sha1.sha1_digest_round_x4.K3V_body
+  : Result algorithms.sha1.u32x4 :=
+  Result.ok
+  (algorithms.sha1.K3,
+  algorithms.sha1.K3,
+  algorithms.sha1.K3,
+  algorithms.sha1.K3)
+def algorithms.sha1.sha1_digest_round_x4.K3V : algorithms.sha1.u32x4 :=
+  eval_global algorithms.sha1.sha1_digest_round_x4.K3V_body
+
+/- [fips_implementations::algorithms::sha1::sha1_digest_round_x4]:
+   Source: 'src/algorithms/sha1.rs', lines 191:0-204:1 -/
+def algorithms.sha1.sha1_digest_round_x4
+  (abcd : algorithms.sha1.u32x4) (work : algorithms.sha1.u32x4) (i : I8) :
+  Result algorithms.sha1.u32x4
+  :=
+  match i with
+  | 0#scalar =>
+    do
+    let ux ←
+      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+        work algorithms.sha1.sha1_digest_round_x4.K0V
+    algorithms.sha1.sha1rnds4c abcd ux
+  | 1#scalar =>
+    do
+    let ux ←
+      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+        work algorithms.sha1.sha1_digest_round_x4.K1V
+    algorithms.sha1.sha1rnds4p abcd ux
+  | 2#scalar =>
+    do
+    let ux ←
+      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+        work algorithms.sha1.sha1_digest_round_x4.K2V
+    algorithms.sha1.sha1rnds4m abcd ux
+  | 3#scalar =>
+    do
+    let ux ←
+      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+        work algorithms.sha1.sha1_digest_round_x4.K3V
+    algorithms.sha1.sha1rnds4p abcd ux
+  | _ => Result.ok (0#u32, 0#u32, 0#u32, 0#u32)
+
+/- [fips_implementations::algorithms::sha1::process]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 326:2-333:3 -/
+divergent def algorithms.sha1.process_loop
+  (state : Array U32 5#usize) (block : Array U8 64#usize)
+  (words : Array U32 16#usize) (index : Usize) :
+  Result Unit
+  :=
+  if index < 16#usize
+  then
+    do
+    let off ← index * 4#usize
+    let i ← off + 3#usize
+    let i1 ← Array.index_usize block i
+    let i2 ← Scalar.cast .U32 i1
+    let i3 ← off + 2#usize
+    let i4 ← Array.index_usize block i3
+    let i5 ← Scalar.cast .U32 i4
+    let i6 ← i5 <<< 8#i32
+    let i7 ← off + 1#usize
+    let i8 ← Array.index_usize block i7
+    let i9 ← Scalar.cast .U32 i8
+    let i10 ← i9 <<< 16#i32
+    let i11 ← Array.index_usize block off
+    let i12 ← Scalar.cast .U32 i11
+    let i13 ← i12 <<< 24#i32
+    let (_, index_mut_back) ← Array.index_mut_usize words index
+    let index1 ← index + 1#usize
+    let words1 := index_mut_back (i2 ||| i6 ||| i10 ||| i13)
+    algorithms.sha1.process_loop state block words1 index1
+  else
+    do
+    let i ← Array.index_usize state 0#usize
+    let i1 ← Array.index_usize state 1#usize
+    let i2 ← Array.index_usize state 2#usize
+    let i3 ← Array.index_usize state 3#usize
+    let i4 ← Array.index_usize words 0#usize
+    let i5 ← Array.index_usize words 1#usize
+    let i6 ← Array.index_usize words 2#usize
+    let i7 ← Array.index_usize words 3#usize
+    let i8 ← Array.index_usize state 4#usize
+    let ux ← algorithms.sha1.sha1_first_add i8 (i4, i5, i6, i7)
+    let h1 ← algorithms.sha1.sha1_digest_round_x4 (i, i1, i2, i3) ux 0#i8
+    let i9 ← Array.index_usize words 4#usize
+    let i10 ← Array.index_usize words 5#usize
+    let i11 ← Array.index_usize words 6#usize
+    let i12 ← Array.index_usize words 7#usize
+    let ux1 ←
+      algorithms.sha1.sha1_first_half (i, i1, i2, i3) (i9, i10, i11, i12)
+    let h0 ← algorithms.sha1.sha1_digest_round_x4 h1 ux1 0#i8
+    let i13 ← Array.index_usize words 8#usize
+    let i14 ← Array.index_usize words 9#usize
+    let i15 ← Array.index_usize words 10#usize
+    let i16 ← Array.index_usize words 11#usize
+    let ux2 ← algorithms.sha1.sha1_first_half h1 (i13, i14, i15, i16)
+    let h11 ← algorithms.sha1.sha1_digest_round_x4 h0 ux2 0#i8
+    let i17 ← Array.index_usize words 12#usize
+    let i18 ← Array.index_usize words 13#usize
+    let i19 ← Array.index_usize words 14#usize
+    let i20 ← Array.index_usize words 15#usize
+    let ux3 ← algorithms.sha1.sha1_first_half h0 (i17, i18, i19, i20)
+    let h01 ← algorithms.sha1.sha1_digest_round_x4 h11 ux3 0#i8
+    let ux4 ← algorithms.sha1.sha1msg1 (i4, i5, i6, i7) (i9, i10, i11, i12)
+    let ux5 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux4 (i13, i14, i15, i16)
+    let w4 ← algorithms.sha1.sha1msg2 ux5 (i17, i18, i19, i20)
+    let ux6 ← algorithms.sha1.sha1_first_half h11 w4
+    let h12 ← algorithms.sha1.sha1_digest_round_x4 h01 ux6 0#i8
+    let ux7 ←
+      algorithms.sha1.sha1msg1 (i9, i10, i11, i12) (i13, i14, i15, i16)
+    let ux8 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux7 (i17, i18, i19, i20)
+    let w0 ← algorithms.sha1.sha1msg2 ux8 w4
+    let ux9 ← algorithms.sha1.sha1_first_half h01 w0
+    let h02 ← algorithms.sha1.sha1_digest_round_x4 h12 ux9 1#i8
+    let ux10 ←
+      algorithms.sha1.sha1msg1 (i13, i14, i15, i16) (i17, i18, i19, i20)
+    let ux11 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux10 w4
+    let w1 ← algorithms.sha1.sha1msg2 ux11 w0
+    let ux12 ← algorithms.sha1.sha1_first_half h12 w1
+    let h13 ← algorithms.sha1.sha1_digest_round_x4 h02 ux12 1#i8
+    let ux13 ← algorithms.sha1.sha1msg1 (i17, i18, i19, i20) w4
+    let ux14 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux13 w0
+    let w2 ← algorithms.sha1.sha1msg2 ux14 w1
+    let ux15 ← algorithms.sha1.sha1_first_half h02 w2
+    let h03 ← algorithms.sha1.sha1_digest_round_x4 h13 ux15 1#i8
+    let ux16 ← algorithms.sha1.sha1msg1 w4 w0
+    let ux17 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux16 w1
+    let w3 ← algorithms.sha1.sha1msg2 ux17 w2
+    let ux18 ← algorithms.sha1.sha1_first_half h13 w3
+    let h14 ← algorithms.sha1.sha1_digest_round_x4 h03 ux18 1#i8
+    let ux19 ← algorithms.sha1.sha1msg1 w0 w1
+    let ux20 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux19 w2
+    let w41 ← algorithms.sha1.sha1msg2 ux20 w3
+    let ux21 ← algorithms.sha1.sha1_first_half h03 w41
+    let h04 ← algorithms.sha1.sha1_digest_round_x4 h14 ux21 1#i8
+    let ux22 ← algorithms.sha1.sha1msg1 w1 w2
+    let ux23 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux22 w3
+    let w01 ← algorithms.sha1.sha1msg2 ux23 w41
+    let ux24 ← algorithms.sha1.sha1_first_half h14 w01
+    let h15 ← algorithms.sha1.sha1_digest_round_x4 h04 ux24 2#i8
+    let ux25 ← algorithms.sha1.sha1msg1 w2 w3
+    let ux26 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux25 w41
+    let w11 ← algorithms.sha1.sha1msg2 ux26 w01
+    let ux27 ← algorithms.sha1.sha1_first_half h04 w11
+    let h05 ← algorithms.sha1.sha1_digest_round_x4 h15 ux27 2#i8
+    let ux28 ← algorithms.sha1.sha1msg1 w3 w41
+    let ux29 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux28 w01
+    let w21 ← algorithms.sha1.sha1msg2 ux29 w11
+    let ux30 ← algorithms.sha1.sha1_first_half h15 w21
+    let h16 ← algorithms.sha1.sha1_digest_round_x4 h05 ux30 2#i8
+    let ux31 ← algorithms.sha1.sha1msg1 w41 w01
+    let ux32 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux31 w11
+    let w31 ← algorithms.sha1.sha1msg2 ux32 w21
+    let ux33 ← algorithms.sha1.sha1_first_half h05 w31
+    let h06 ← algorithms.sha1.sha1_digest_round_x4 h16 ux33 2#i8
+    let ux34 ← algorithms.sha1.sha1msg1 w01 w11
+    let ux35 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux34 w21
+    let w42 ← algorithms.sha1.sha1msg2 ux35 w31
+    let ux36 ← algorithms.sha1.sha1_first_half h16 w42
+    let h17 ← algorithms.sha1.sha1_digest_round_x4 h06 ux36 2#i8
+    let ux37 ← algorithms.sha1.sha1msg1 w11 w21
+    let ux38 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux37 w31
+    let w02 ← algorithms.sha1.sha1msg2 ux38 w42
+    let ux39 ← algorithms.sha1.sha1_first_half h06 w02
+    let h07 ← algorithms.sha1.sha1_digest_round_x4 h17 ux39 3#i8
+    let ux40 ← algorithms.sha1.sha1msg1 w21 w31
+    let ux41 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux40 w42
+    let w12 ← algorithms.sha1.sha1msg2 ux41 w02
+    let ux42 ← algorithms.sha1.sha1_first_half h17 w12
+    let h18 ← algorithms.sha1.sha1_digest_round_x4 h07 ux42 3#i8
+    let ux43 ← algorithms.sha1.sha1msg1 w31 w42
+    let ux44 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux43 w02
+    let w22 ← algorithms.sha1.sha1msg2 ux44 w12
+    let ux45 ← algorithms.sha1.sha1_first_half h07 w22
+    let h08 ← algorithms.sha1.sha1_digest_round_x4 h18 ux45 3#i8
+    let ux46 ← algorithms.sha1.sha1msg1 w42 w02
+    let ux47 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux46 w12
+    let w32 ← algorithms.sha1.sha1msg2 ux47 w22
+    let ux48 ← algorithms.sha1.sha1_first_half h18 w32
+    let h19 ← algorithms.sha1.sha1_digest_round_x4 h08 ux48 3#i8
+    let ux49 ← algorithms.sha1.sha1msg1 w02 w12
+    let ux50 ←
+      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+        ux49 w22
+    let w43 ← algorithms.sha1.sha1msg2 ux50 w32
+    let ux51 ← algorithms.sha1.sha1_first_half h08 w43
+    let h09 ← algorithms.sha1.sha1_digest_round_x4 h19 ux51 3#i8
+    let _ ← algorithms.sha1.sha1_first h19
+    let (a, b, c, d) := h09
+    let i21 ← Array.index_usize state 0#usize
+    let i22 := core.num.u32.wrapping_add i21 a
+    let state1 ← Array.update_usize state 0#usize i22
+    let i23 ← Array.index_usize state1 1#usize
+    let i24 := core.num.u32.wrapping_add i23 b
+    let state2 ← Array.update_usize state1 1#usize i24
+    let i25 ← Array.index_usize state2 2#usize
+    let i26 := core.num.u32.wrapping_add i25 c
+    let state3 ← Array.update_usize state2 2#usize i26
+    let i27 ← Array.index_usize state3 3#usize
+    let i28 := core.num.u32.wrapping_add i27 d
+    let state4 ← Array.update_usize state3 3#usize i28
+    let _ ← Array.index_usize state4 4#usize
+    let _ ← Array.index_mut_usize state4 4#usize
+    Result.ok ()
+
+/- [fips_implementations::algorithms::sha1::process]:
+   Source: 'src/algorithms/sha1.rs', lines 323:0-404:1 -/
+def algorithms.sha1.process
+  (state : Array U32 5#usize) (block : Array U8 64#usize) :
+  Result (Array U32 5#usize)
+  :=
+  do
+  let words := Array.repeat 16#usize 0#u32
+  algorithms.sha1.process_loop state block words 0#usize
+  Result.ok state
+
+/- [fips_implementations::algorithms::sha1::chunkify]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 410:2-419:3 -/
+divergent def algorithms.sha1.chunkify_loop
+  (msg : Slice U8) (chunks : alloc.vec.Vec (Array U8 64#usize))
+  (msg_start : Usize) :
+  Result (alloc.vec.Vec (Array U8 64#usize))
+  :=
+  let i := Slice.len msg
+  if msg_start < i
+  then
+    do
+    let chunk := Array.repeat 64#usize 0#u8
+    let msg_end ← msg_start + algorithms.sha1.CHUNK_SIZE
+    let msg_slice ←
+      core.slice.index.Slice.index
+        (core.slice.index.SliceIndexRangeUsizeSliceTInst U8) msg
+        { start := msg_start, end_ := msg_end }
+    let (s, index_mut_back) ←
+      core.array.Array.index_mut (core.ops.index.IndexMutSliceTIInst
+        (core.slice.index.SliceIndexRangeUsizeSliceTInst U8)) chunk
+        { start := 0#usize, end_ := algorithms.sha1.CHUNK_SIZE }
+    let s1 ← core.slice.Slice.copy_from_slice core.marker.CopyU8 s msg_slice
+    let chunk1 := index_mut_back s1
+    let chunks1 ← alloc.vec.Vec.push chunks chunk1
+    let msg_start1 ← msg_start + algorithms.sha1.CHUNK_SIZE
+    algorithms.sha1.chunkify_loop msg chunks1 msg_start1
+  else Result.ok chunks
+
+/- [fips_implementations::algorithms::sha1::chunkify]:
+   Source: 'src/algorithms/sha1.rs', lines 406:0-421:1 -/
+def algorithms.sha1.chunkify
+  (msg : Slice U8) : Result (alloc.vec.Vec (Array U8 64#usize)) :=
+  algorithms.sha1.chunkify_loop msg (alloc.vec.Vec.new (Array U8 64#usize))
+    0#usize
+
+/- [fips_implementations::algorithms::sha1::pad_message]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 437:2-440:3 -/
+divergent def algorithms.sha1.pad_message_loop
+  (msg_len_bits : U64) (padded_msg : alloc.vec.Vec U8)
+  (zero_padding_length : Usize) (i : Usize) :
+  Result (alloc.vec.Vec U8)
+  :=
+  if i < zero_padding_length
+  then
+    do
+    let padded_msg1 ← alloc.vec.Vec.push padded_msg 0#u8
+    let i1 ← i + 1#usize
+    algorithms.sha1.pad_message_loop msg_len_bits padded_msg1
+      zero_padding_length i1
+  else
+    do
+    let length_bytes := Array.repeat 8#usize 0#u8
+    let i1 ← msg_len_bits >>> 56#i32
+    let (_, index_mut_back) ← Array.index_mut_usize length_bytes 0#usize
+    let i2 ← Scalar.cast .U8 (i1 &&& 255#u64)
+    let i3 ← msg_len_bits >>> 48#i32
+    let length_bytes1 := index_mut_back i2
+    let (_, index_mut_back1) ← Array.index_mut_usize length_bytes1 1#usize
+    let i4 ← Scalar.cast .U8 (i3 &&& 255#u64)
+    let i5 ← msg_len_bits >>> 40#i32
+    let length_bytes2 := index_mut_back1 i4
+    let (_, index_mut_back2) ← Array.index_mut_usize length_bytes2 2#usize
+    let i6 ← Scalar.cast .U8 (i5 &&& 255#u64)
+    let i7 ← msg_len_bits >>> 32#i32
+    let length_bytes3 := index_mut_back2 i6
+    let (_, index_mut_back3) ← Array.index_mut_usize length_bytes3 3#usize
+    let i8 ← Scalar.cast .U8 (i7 &&& 255#u64)
+    let i9 ← msg_len_bits >>> 24#i32
+    let length_bytes4 := index_mut_back3 i8
+    let (_, index_mut_back4) ← Array.index_mut_usize length_bytes4 4#usize
+    let i10 ← Scalar.cast .U8 (i9 &&& 255#u64)
+    let i11 ← msg_len_bits >>> 16#i32
+    let length_bytes5 := index_mut_back4 i10
+    let (_, index_mut_back5) ← Array.index_mut_usize length_bytes5 5#usize
+    let i12 ← Scalar.cast .U8 (i11 &&& 255#u64)
+    let i13 ← msg_len_bits >>> 8#i32
+    let length_bytes6 := index_mut_back5 i12
+    let (_, index_mut_back6) ← Array.index_mut_usize length_bytes6 6#usize
+    let i14 ← Scalar.cast .U8 (i13 &&& 255#u64)
+    let i15 ← msg_len_bits >>> 0#i32
+    let length_bytes7 := index_mut_back6 i14
+    let (_, index_mut_back7) ← Array.index_mut_usize length_bytes7 7#usize
+    let i16 ← Scalar.cast .U8 (i15 &&& 255#u64)
+    let length_bytes8 := index_mut_back7 i16
+    let s ← Array.to_slice length_bytes8
+    alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg s
+
+/- [fips_implementations::algorithms::sha1::pad_message]:
+   Source: 'src/algorithms/sha1.rs', lines 423:0-455:1 -/
+def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
+  do
+  let i := Slice.len msg
+  let i1 ← Scalar.cast .U64 i
+  let msg_len_bits ← i1 * 8#u64
+  let i2 := Slice.len msg
+  let i3 ← i2 + 1#usize
+  let i4 ← i3 + 64#usize
+  let padded_msg := alloc.vec.Vec.with_capacity U8 i4
+  let padded_msg1 ←
+    alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg msg
+  let padded_msg2 ← alloc.vec.Vec.push padded_msg1 128#u8
+  let i5 := alloc.vec.Vec.len padded_msg2
+  let i6 ← i5 % 64#usize
+  let i7 ← 56#usize - i6
+  let zero_padding_length ← i7 % 64#usize
+  algorithms.sha1.pad_message_loop msg_len_bits padded_msg2 zero_padding_length
+    0#usize
+
+/- [fips_implementations::algorithms::sha1::hash_to_vec]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 460:2-467:3 -/
+divergent def algorithms.sha1.hash_to_vec_loop
+  (final_hash : Array U32 5#usize) (result_bytes : alloc.vec.Vec U8)
+  (index : Usize) :
+  Result (alloc.vec.Vec U8)
+  :=
+  do
+  let s ← Array.to_slice final_hash
+  let i := Slice.len s
+  if index < i
+  then
+    do
+    let word ← Array.index_usize final_hash index
+    let i1 ← word >>> 24#i32
+    let i2 ← Scalar.cast .U8 (i1 &&& 255#u32)
+    let result_bytes1 ← alloc.vec.Vec.push result_bytes i2
+    let i3 ← word >>> 16#i32
+    let i4 ← Scalar.cast .U8 (i3 &&& 255#u32)
+    let result_bytes2 ← alloc.vec.Vec.push result_bytes1 i4
+    let i5 ← word >>> 8#i32
+    let i6 ← Scalar.cast .U8 (i5 &&& 255#u32)
+    let result_bytes3 ← alloc.vec.Vec.push result_bytes2 i6
+    let i7 ← word >>> 0#i32
+    let i8 ← Scalar.cast .U8 (i7 &&& 255#u32)
+    let result_bytes4 ← alloc.vec.Vec.push result_bytes3 i8
+    let index1 ← index + 1#usize
+    algorithms.sha1.hash_to_vec_loop final_hash result_bytes4 index1
+  else Result.ok result_bytes
+
+/- [fips_implementations::algorithms::sha1::hash_to_vec]:
+   Source: 'src/algorithms/sha1.rs', lines 457:0-469:1 -/
+def algorithms.sha1.hash_to_vec
+  (final_hash : Array U32 5#usize) : Result (alloc.vec.Vec U8) :=
+  algorithms.sha1.hash_to_vec_loop final_hash (alloc.vec.Vec.new U8) 0#usize
+
+/- [fips_implementations::algorithms::sha1::hash]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 476:2-480:3 -/
+divergent def algorithms.sha1.hash_loop
+  (chunks : alloc.vec.Vec (Array U8 64#usize)) (state : Array U32 5#usize)
+  (chunk_index : Usize) :
+  Result (alloc.vec.Vec U8)
+  :=
+  let i := alloc.vec.Vec.len chunks
+  if chunk_index < i
+  then
+    do
+    let chunk ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst (Array U8
+        64#usize)) chunks chunk_index
+    let state1 ← algorithms.sha1.process state chunk
+    let chunk_index1 ← chunk_index + 1#usize
+    algorithms.sha1.hash_loop chunks state1 chunk_index1
+  else algorithms.sha1.hash_to_vec state
+
+/- [fips_implementations::algorithms::sha1::hash]:
+   Source: 'src/algorithms/sha1.rs', lines 471:0-482:1 -/
+def algorithms.sha1.hash (message : Slice U8) : Result (alloc.vec.Vec U8) :=
+  do
+  let padded_msg ← algorithms.sha1.pad_message message
+  let s := alloc.vec.DerefVec.deref padded_msg
+  let chunks ← algorithms.sha1.chunkify s
+  algorithms.sha1.hash_loop chunks algorithms.sha1.INITIAL_STATE 0#usize
+
 end fips_implementations
