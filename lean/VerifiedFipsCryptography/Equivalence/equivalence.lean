@@ -28,10 +28,22 @@ def lifted_testBit (b : U8) (i : U8) : Result Bool :=
   let li := U8_to_UInt8 i
   Result.ok (AES.testBit lb li)
 
--- Can't proceed because ">>>" or Scalar.shiftr is defined with
--- a sorry in aeneas/backends/lean/Base/Primitives/Scalar.lean
+theorem eq_shiftr (b : UInt8) (i : UInt8) :
+    (UInt8_to_U8 b) >>> (UInt8_to_U8 i)
+    = Result.ok ( UInt8_to_U8 (b >>> i) ) := by
+  sorry
+  -- Can't proceed because ">>>" or Scalar.shiftr is defined with
+  -- a sorry in aeneas/backends/lean/Base/Primitives/Scalar.lean
+
+theorem eq_modtwo (b: UInt8) : (b % 2 == 1)
+    = decide ((UInt8_to_U8 b) &&& 1#u8 = 1#u8) := by
+  sorry
+  -- Can't proceed because "&&&" or Scalar.and is defined with
+  -- a sorry in aeneas/backends/lean/Base/Primitives/Scalar.lean
 
 theorem eq_test_bit : lifted_testBit = fips_implementations.algorithms.aes.test_bit := by
   funext b i
-  simp [fips_implementations.algorithms.aes.test_bit, lifted_testBit, AES.testBit, decide]
+  simp [fips_implementations.algorithms.aes.test_bit, lifted_testBit, AES.testBit]
   simp [HAnd.hAnd, HShiftRight.hShiftRight]
+  sorry
+  -- Strategy is to apply the monad laws and above lemmas
