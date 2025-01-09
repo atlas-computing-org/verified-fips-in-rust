@@ -4,12 +4,13 @@ This repository builds towards verified Rust implementations of FIPS 140-3 algor
 
 Currently, this repository contains the following pieces:
 
-Rust reference implementations:
-- AES
-
-Lean specifications:
+[Rust reference implementations](./rust/src/algorithms) (and their [conversions to Lean](./lean/VerifiedFipsCryptography/RustTranslations/FipsImplementations.lean)):
 - SHA-1
 - AES
 
-Verified implementations:
+[Lean specifications](./lean/VerifiedFipsCryptography/Specs):
+- SHA-1
+- AES
+
+[Verified implementations](./lean/VerifiedFipsCryptography/Equivalence):
 - (None)
