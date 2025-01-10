@@ -450,10 +450,10 @@ def algorithms.aes.gf_mul (a : U8) (b : U8) : Result U8 :=
 --   :=
 --   algorithms.aes.expand_key_schedule_loop w nk total_words nk
 
--- /- [fips_implementations::algorithms::aes::key_expansion]:
---    Source: 'src/algorithms/aes.rs', lines 127:0-139:1 -/
--- def algorithms.aes.key_expansion
---   (key : Slice U8) (nk : Usize) (nr : Usize) : Result (alloc.vec.Vec U8) :=
+/- [fips_implementations::algorithms::aes::key_expansion]:
+   Source: 'src/algorithms/aes.rs', lines 127:0-139:1 -/
+def algorithms.aes.key_expansion
+  (key : Slice U8) (nk : Usize) (nr : Usize) : Result (alloc.vec.Vec U8) := by sorry
 --   do
 --   let i ← nr + 1#usize
 --   let total_words ← 4#usize * i
@@ -860,16 +860,16 @@ def algorithms.aes.gf_mul (a : U8) (b : U8) : Result U8 :=
 --     let a ← algorithms.aes.extract_array_16 key_schedule i
 --     algorithms.aes.add_round_key state2 a
 
--- /- [fips_implementations::algorithms::aes::cipher]:
---    Source: 'src/algorithms/aes.rs', lines 276:0-295:1 -/
--- def algorithms.aes.cipher
---   (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let a ← algorithms.aes.extract_array_16 key_schedule 0#usize
---   let state ← algorithms.aes.add_round_key input a
---   algorithms.aes.cipher_loop key_schedule nr state 1#usize
+/- [fips_implementations::algorithms::aes::cipher]:
+   Source: 'src/algorithms/aes.rs', lines 276:0-295:1 -/
+def algorithms.aes.cipher
+  (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
+  Result (Array U8 16#usize)
+  := by sorry
+  -- do
+  -- let a ← algorithms.aes.extract_array_16 key_schedule 0#usize
+  -- let state ← algorithms.aes.add_round_key input a
+  -- algorithms.aes.cipher_loop key_schedule nr state 1#usize
 
 -- /- [fips_implementations::algorithms::aes::inv_cipher]: loop 0:
 --    Source: 'src/algorithms/aes.rs', lines 304:4-311:5 -/
@@ -901,89 +901,89 @@ def algorithms.aes.gf_mul (a : U8) (b : U8) : Result U8 :=
 --     let a ← algorithms.aes.extract_array_16 key_schedule 0#usize
 --     algorithms.aes.add_round_key state2 a
 
--- /- [fips_implementations::algorithms::aes::inv_cipher]:
---    Source: 'src/algorithms/aes.rs', lines 298:0-318:1 -/
--- def algorithms.aes.inv_cipher
---   (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
---   Result (Array U8 16#usize)
---   :=
+/- [fips_implementations::algorithms::aes::inv_cipher]:
+   Source: 'src/algorithms/aes.rs', lines 298:0-318:1 -/
+def algorithms.aes.inv_cipher
+  (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
+  Result (Array U8 16#usize)
+  := by sorry
 --   do
 --   let i ← nr * 16#usize
 --   let a ← algorithms.aes.extract_array_16 key_schedule i
 --   let state ← algorithms.aes.add_round_key input a
 --   algorithms.aes.inv_cipher_loop key_schedule nr state 1#usize
 
--- /- [fips_implementations::algorithms::aes::aes128]:
---    Source: 'src/algorithms/aes.rs', lines 321:0-326:1 -/
--- def algorithms.aes.aes128
---   (input : Array U8 16#usize) (key : Array U8 16#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.cipher input s1 10#usize
+/- [fips_implementations::algorithms::aes::aes128]:
+   Source: 'src/algorithms/aes.rs', lines 321:0-326:1 -/
+def algorithms.aes.aes128
+  (input : Array U8 16#usize) (key : Array U8 16#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.cipher input s1 10#usize
 
--- /- [fips_implementations::algorithms::aes::aes192]:
---    Source: 'src/algorithms/aes.rs', lines 329:0-334:1 -/
--- def algorithms.aes.aes192
---   (input : Array U8 16#usize) (key : Array U8 24#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.cipher input s1 12#usize
+/- [fips_implementations::algorithms::aes::aes192]:
+   Source: 'src/algorithms/aes.rs', lines 329:0-334:1 -/
+def algorithms.aes.aes192
+  (input : Array U8 16#usize) (key : Array U8 24#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.cipher input s1 12#usize
 
--- /- [fips_implementations::algorithms::aes::aes256]:
---    Source: 'src/algorithms/aes.rs', lines 337:0-342:1 -/
--- def algorithms.aes.aes256
---   (input : Array U8 16#usize) (key : Array U8 32#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.cipher input s1 14#usize
+/- [fips_implementations::algorithms::aes::aes256]:
+   Source: 'src/algorithms/aes.rs', lines 337:0-342:1 -/
+def algorithms.aes.aes256
+  (input : Array U8 16#usize) (key : Array U8 32#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.cipher input s1 14#usize
 
--- /- [fips_implementations::algorithms::aes::aes128_inv]:
---    Source: 'src/algorithms/aes.rs', lines 345:0-350:1 -/
--- def algorithms.aes.aes128_inv
---   (input : Array U8 16#usize) (key : Array U8 16#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.inv_cipher input s1 10#usize
+/- [fips_implementations::algorithms::aes::aes128_inv]:
+   Source: 'src/algorithms/aes.rs', lines 345:0-350:1 -/
+def algorithms.aes.aes128_inv
+  (input : Array U8 16#usize) (key : Array U8 16#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.inv_cipher input s1 10#usize
 
--- /- [fips_implementations::algorithms::aes::aes192_inv]:
---    Source: 'src/algorithms/aes.rs', lines 353:0-358:1 -/
--- def algorithms.aes.aes192_inv
---   (input : Array U8 16#usize) (key : Array U8 24#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.inv_cipher input s1 12#usize
+/- [fips_implementations::algorithms::aes::aes192_inv]:
+   Source: 'src/algorithms/aes.rs', lines 353:0-358:1 -/
+def algorithms.aes.aes192_inv
+  (input : Array U8 16#usize) (key : Array U8 24#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.inv_cipher input s1 12#usize
 
--- /- [fips_implementations::algorithms::aes::aes256_inv]:
---    Source: 'src/algorithms/aes.rs', lines 361:0-366:1 -/
--- def algorithms.aes.aes256_inv
---   (input : Array U8 16#usize) (key : Array U8 32#usize) :
---   Result (Array U8 16#usize)
---   :=
---   do
---   let s ← Array.to_slice key
---   let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
---   let s1 := alloc.vec.DerefVec.deref key_schedule
---   algorithms.aes.inv_cipher input s1 14#usize
+/- [fips_implementations::algorithms::aes::aes256_inv]:
+   Source: 'src/algorithms/aes.rs', lines 361:0-366:1 -/
+def algorithms.aes.aes256_inv
+  (input : Array U8 16#usize) (key : Array U8 32#usize) :
+  Result (Array U8 16#usize)
+  :=
+  do
+  let s ← Array.to_slice key
+  let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
+  let s1 := alloc.vec.DerefVec.deref key_schedule
+  algorithms.aes.inv_cipher input s1 14#usize
 
 -- /- [fips_implementations::algorithms::sha1::u32x4]
 --    Source: 'src/algorithms/sha1.rs', lines 9:0-9:53 -/
