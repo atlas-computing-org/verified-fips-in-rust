@@ -76,7 +76,7 @@
    "name": "base",
    "manifestFile": "lake-manifest.json",
    "inherited": false,
-   "dir": "./../../aeneas/backends/lean",
+   "dir": "././aeneas/backends/lean",
    "configFile": "lakefile.lean"}],
  "name": "verified_fips_cryptography",
  "lakeDir": ".lake"}
