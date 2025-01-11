@@ -198,7 +198,7 @@ def algorithms.aes.rot_word
   let i1 ← Array.index_usize word 2#usize
   let i2 ← Array.index_usize word 3#usize
   let i3 ← Array.index_usize word 0#usize
-  Result.ok (Array.make 4#usize [ i, i1, i2, i3 ])
+  Result.ok (Array.make 4#usize [ i, i1, i2, i3 ] rfl)
 
 /- [fips_implementations::algorithms::aes::sub_word]:
    Source: 'src/algorithms/aes.rs', lines 79:0-86:1 -/
@@ -217,7 +217,7 @@ def algorithms.aes.sub_word
   let i9 ← Array.index_usize word 3#usize
   let i10 ← Scalar.cast .Usize i9
   let i11 ← Array.index_usize algorithms.aes.SBOX i10
-  Result.ok (Array.make 4#usize [ i2, i5, i8, i11 ])
+  Result.ok (Array.make 4#usize [ i2, i5, i8, i11 ] rfl)
 
 /- [alloc::vec::{alloc::vec::Vec<T, A>}#2::extend_from_slice]:
    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3022:4-3022:52
@@ -288,7 +288,7 @@ divergent def algorithms.aes.expand_key_schedule_loop
     then
       do
       let a ←
-        algorithms.aes.rot_word (Array.make 4#usize [ i2, i6, i10, i14 ])
+        algorithms.aes.rot_word (Array.make 4#usize [ i2, i6, i10, i14 ] rfl)
       let temp ← algorithms.aes.sub_word a
       let i16 ← nk1 / nk
       let i17 ← i16 - 1#usize
@@ -321,19 +321,19 @@ divergent def algorithms.aes.expand_key_schedule_loop
       let temp1 := index_mut_back (i19 ^^^ i18)
       let i35 ← Array.index_usize temp1 0#usize
       let i36 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 0#usize
+        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ] rfl) 0#usize
       let w1 ← alloc.vec.Vec.push w (i35 ^^^ i36)
       let i37 ← Array.index_usize temp1 1#usize
       let i38 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 1#usize
+        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ] rfl) 1#usize
       let w2 ← alloc.vec.Vec.push w1 (i37 ^^^ i38)
       let i39 ← Array.index_usize temp1 2#usize
       let i40 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 2#usize
+        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ] rfl) 2#usize
       let w3 ← alloc.vec.Vec.push w2 (i39 ^^^ i40)
       let i41 ← Array.index_usize temp1 3#usize
       let i42 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 3#usize
+        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ] rfl) 3#usize
       let w4 ← alloc.vec.Vec.push w3 (i41 ^^^ i42)
       let i43 ← nk1 + 1#usize
       algorithms.aes.expand_key_schedule_loop w4 nk total_words i43
@@ -346,7 +346,7 @@ divergent def algorithms.aes.expand_key_schedule_loop
         then
           do
           let temp ←
-            algorithms.aes.sub_word (Array.make 4#usize [ i2, i6, i10, i14 ])
+            algorithms.aes.sub_word (Array.make 4#usize [ i2, i6, i10, i14 ] rfl)
           let i17 ← nk1 - nk
           let i18 ← i17 * 4#usize
           let i19 ←
@@ -372,22 +372,22 @@ divergent def algorithms.aes.expand_key_schedule_loop
               w i30
           let i32 ← Array.index_usize temp 0#usize
           let i33 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               0#usize
           let w1 ← alloc.vec.Vec.push w (i32 ^^^ i33)
           let i34 ← Array.index_usize temp 1#usize
           let i35 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               1#usize
           let w2 ← alloc.vec.Vec.push w1 (i34 ^^^ i35)
           let i36 ← Array.index_usize temp 2#usize
           let i37 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               2#usize
           let w3 ← alloc.vec.Vec.push w2 (i36 ^^^ i37)
           let i38 ← Array.index_usize temp 3#usize
           let i39 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               3#usize
           let w4 ← alloc.vec.Vec.push w3 (i38 ^^^ i39)
           let i40 ← nk1 + 1#usize
@@ -418,27 +418,27 @@ divergent def algorithms.aes.expand_key_schedule_loop
             alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
               w i30
           let i32 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 0#usize
+            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 0#usize
           let i33 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               0#usize
           let w1 ← alloc.vec.Vec.push w (i32 ^^^ i33)
           let i34 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 1#usize
+            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 1#usize
           let i35 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               1#usize
           let w2 ← alloc.vec.Vec.push w1 (i34 ^^^ i35)
           let i36 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 2#usize
+            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 2#usize
           let i37 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               2#usize
           let w3 ← alloc.vec.Vec.push w2 (i36 ^^^ i37)
           let i38 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 3#usize
+            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 3#usize
           let i39 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
+            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ] rfl)
               3#usize
           let w4 ← alloc.vec.Vec.push w3 (i38 ^^^ i39)
           let i40 ← nk1 + 1#usize
@@ -469,24 +469,24 @@ divergent def algorithms.aes.expand_key_schedule_loop
           alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
             i29
         let i31 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 0#usize
+          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 0#usize
         let i32 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 0#usize
+          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ] rfl) 0#usize
         let w1 ← alloc.vec.Vec.push w (i31 ^^^ i32)
         let i33 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 1#usize
+          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 1#usize
         let i34 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 1#usize
+          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ] rfl) 1#usize
         let w2 ← alloc.vec.Vec.push w1 (i33 ^^^ i34)
         let i35 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 2#usize
+          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 2#usize
         let i36 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 2#usize
+          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ] rfl) 2#usize
         let w3 ← alloc.vec.Vec.push w2 (i35 ^^^ i36)
         let i37 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 3#usize
+          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ] rfl) 3#usize
         let i38 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 3#usize
+          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ] rfl) 3#usize
         let w4 ← alloc.vec.Vec.push w3 (i37 ^^^ i38)
         let i39 ← nk1 + 1#usize
         algorithms.aes.expand_key_schedule_loop w4 nk total_words i39
@@ -592,7 +592,7 @@ def algorithms.aes.shift_rows
   Result.ok
     (Array.make 16#usize [
       i, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-      ])
+      ] rfl)
 
 /- [fips_implementations::algorithms::aes::inv_shift_rows]:
    Source: 'src/algorithms/aes.rs', lines 180:0-187:1 -/
@@ -618,7 +618,7 @@ def algorithms.aes.inv_shift_rows
   Result.ok
     (Array.make 16#usize [
       i, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-      ])
+      ] rfl)
 
 /- [fips_implementations::algorithms::aes::mix_column]:
    Source: 'src/algorithms/aes.rs', lines 190:0-197:1 -/
@@ -661,7 +661,7 @@ def algorithms.aes.mix_column
     (Array.make 4#usize [
       i1 ^^^ i3 ^^^ i5 ^^^ i7, i9 ^^^ i11 ^^^ i13 ^^^ i15, i17 ^^^ i19 ^^^ i21
       ^^^ i23, i25 ^^^ i27 ^^^ i29 ^^^ i31
-      ])
+      ] rfl)
 
 /- [fips_implementations::algorithms::aes::inv_mix_column]:
    Source: 'src/algorithms/aes.rs', lines 200:0-207:1 -/
@@ -704,7 +704,7 @@ def algorithms.aes.inv_mix_column
     (Array.make 4#usize [
       i1 ^^^ i3 ^^^ i5 ^^^ i7, i9 ^^^ i11 ^^^ i13 ^^^ i15, i17 ^^^ i19 ^^^ i21
       ^^^ i23, i25 ^^^ i27 ^^^ i29 ^^^ i31
-      ])
+      ] rfl)
 
 /- [fips_implementations::algorithms::aes::mix_columns]: loop 0:
    Source: 'src/algorithms/aes.rs', lines 213:4-226:5 -/
@@ -727,7 +727,7 @@ divergent def algorithms.aes.mix_columns_loop
     let i10 ← i9 + 3#usize
     let i11 ← Array.index_usize state i10
     let mixed ←
-      algorithms.aes.mix_column (Array.make 4#usize [ i2, i5, i8, i11 ])
+      algorithms.aes.mix_column (Array.make 4#usize [ i2, i5, i8, i11 ] rfl)
     let i12 ← Array.index_usize mixed 0#usize
     let i13 ← 4#usize * i
     let (_, index_mut_back) ← Array.index_mut_usize result i13
@@ -779,7 +779,7 @@ divergent def algorithms.aes.inv_mix_columns_loop
     let i10 ← i9 + 3#usize
     let i11 ← Array.index_usize state i10
     let mixed ←
-      algorithms.aes.inv_mix_column (Array.make 4#usize [ i2, i5, i8, i11 ])
+      algorithms.aes.inv_mix_column (Array.make 4#usize [ i2, i5, i8, i11 ] rfl)
     let i12 ← Array.index_usize mixed 0#usize
     let i13 ← 4#usize * i
     let (_, index_mut_back) ← Array.index_mut_usize result i13
@@ -878,7 +878,7 @@ def algorithms.aes.extract_array_16
     (Array.make 16#usize [
       i2, i4, i6, i8, i10, i12, i14, i16, i18, i20, i22, i24, i26, i28, i30,
       i32
-      ])
+      ] rfl)
 
 /- [fips_implementations::algorithms::aes::cipher]: loop 0:
    Source: 'src/algorithms/aes.rs', lines 282:4-288:5 -/
