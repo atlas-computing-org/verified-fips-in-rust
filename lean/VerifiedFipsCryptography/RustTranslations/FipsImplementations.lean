@@ -22,39 +22,38 @@ def algorithms.aes.xtime (b : U8) : Result U8 :=
   let b1 ← algorithms.aes.test_bit b 7#u8
   if b1
   then do
-       let i ← b <<< 1#i32
+       let i ← b <<< 1#u32
        Result.ok (i ^^^ 27#u8)
-  else b <<< 1#i32
+  else b <<< 1#u32
 
 /- [fips_implementations::algorithms::aes::gf_mul]: loop 0:
    Source: 'src/algorithms/aes.rs', lines 19:4-26:5 -/
+-- **MANUAL CODE**: change i32 to u32 all below
 divergent def algorithms.aes.gf_mul_loop
-  (a : U8) (b : U8) (result : U8) (i : I32) : Result U8 :=
-  if i < 8#i32
+  (a : U8) (b : U8) (result : U8) (i : U32) : Result U8 :=
+  if i < 8#u32
   then
     if b &&& 1#u8 = 1#u8
     then
       do
       let a1 ← algorithms.aes.xtime a
-      let b1 ← b >>> 1#i32
-      let i1 ← i + 1#i32
+      let b1 ← b >>> 1#u32
+      let i1 ← i + 1#u32
       algorithms.aes.gf_mul_loop a1 b1 (result ^^^ a) i1
     else
       do
       let a1 ← algorithms.aes.xtime a
-      let b1 ← b >>> 1#i32
-      let i1 ← i + 1#i32
+      let b1 ← b >>> 1#u32
+      let i1 ← i + 1#u32
       algorithms.aes.gf_mul_loop a1 b1 result i1
   else Result.ok result
 
 /- [fips_implementations::algorithms::aes::gf_mul]:
    Source: 'src/algorithms/aes.rs', lines 16:0-28:1 -/
 def algorithms.aes.gf_mul (a : U8) (b : U8) : Result U8 :=
-  algorithms.aes.gf_mul_loop a b 0#u8 0#i32
+  algorithms.aes.gf_mul_loop a b 0#u8 0#u32
 
-/- **MANUAL CODE**:
-   Avoid using large arrays of #u8 macros. Lean's compiler does not handle these
-   efficiently. -/
+/- **MANUAL CODE**: translate between Lean and Aeneas types, this should probably be somewhere in Aeneas -/
 
 lemma U8min {x : UInt8} : Scalar.min ScalarTy.U8 ≤ x.val := by simp [Scalar.min]
 lemma U8max {x : UInt8} : x.val ≤ Scalar.max ScalarTy.U8 := by
@@ -62,6 +61,38 @@ lemma U8max {x : UInt8} : x.val ≤ Scalar.max ScalarTy.U8 := by
   exact Nat.le_of_lt_succ x.toNat_lt
 
 def toU8 (x : UInt8) : U8 := ⟨x.val.val, U8min, U8max⟩
+def toUInt8 (x : U8) : UInt8 := ⟨x.toNat, sorry⟩
+
+lemma toUInt8_toU8 {x : UInt8} : toUInt8 (toU8 x) = x := by sorry
+
+lemma U32min {x : UInt32} : Scalar.min ScalarTy.U32 ≤ x.val := by simp [Scalar.min]
+lemma U32max {x : UInt32} : x.val ≤ Scalar.max ScalarTy.U32 := by
+  simp only [UInt32.val_val_eq_toNat, Scalar.max, U32.max, Nat.cast_le_ofNat]
+  exact Nat.le_of_lt_succ x.toNat_lt
+
+def toU32 (x : UInt32) : U32 := ⟨x.val.val, U32min, U32max⟩
+def toUInt32 (x : U32) : UInt32 := ⟨x.toNat, sorry⟩
+
+lemma Usizemin {x : USize} : Scalar.min ScalarTy.Usize ≤ x.val := by simp [Scalar.min]
+lemma Usizemax {x : USize} : x.val ≤ Scalar.max ScalarTy.Usize := by sorry
+  -- simp only [USize.val_val_eq_toNat, Scalar.max, Usize.max, Nat.cast_le_ofNat]
+  -- exact Nat.le_of_lt_succ x.toNat_lt
+
+def toUsize (x : USize) : Usize := ⟨x.val.val, Usizemin, Usizemax⟩
+def toUSize (x : Usize) : USize := ⟨x.toNat, sorry⟩
+
+lemma U64min {x : UInt64} : Scalar.min ScalarTy.U64 ≤ x.val := by simp [Scalar.min]
+lemma U64max {x : UInt64} : x.val ≤ Scalar.max ScalarTy.U64 := by sorry
+  -- simp only [UInt64.val_val_eq_toNat, Scalar.max, Usize.max, Nat.cast_le_ofNat]
+  -- exact Nat.le_of_lt_succ x.toNat_lt
+
+def toU64 (x : UInt64) : U64 := ⟨x.val.val, U64min, U64max⟩
+def toUInt64 (x : U64) : UInt64 := ⟨x.toNat, sorry⟩
+
+
+/- **MANUAL CODE**:
+   Avoid using large arrays of #u8 macros. Lean's compiler does not handle these
+   efficiently. -/
 
 def sBoxUInt8 : List UInt8 := [
   0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -222,9 +253,13 @@ def algorithms.aes.sub_word
 /- [alloc::vec::{alloc::vec::Vec<T, A>}#2::extend_from_slice]:
    Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3022:4-3022:52
    Name pattern: alloc::vec::{alloc::vec::Vec<@T, @A>}::extend_from_slice -/
-axiom alloc.vec.Vec.extend_from_slice
-  {T : Type} {A : Type} (corecloneCloneInst : core.clone.Clone T) :
-  alloc.vec.Vec T → Slice T → Result (alloc.vec.Vec T)
+-- **MANUAL CODE**: remove {A : Type}, change axiom -> def
+def alloc.vec.Vec.extend_from_slice
+  {T : Type} (corecloneCloneInst : core.clone.Clone T) :
+  alloc.vec.Vec T → Slice T → Result (alloc.vec.Vec T) := sorry
+-- axiom alloc.vec.Vec.extend_from_slice
+--   {T : Type} {A : Type} (corecloneCloneInst : core.clone.Clone T) :
+--   alloc.vec.Vec T → Slice T → Result (alloc.vec.Vec T)
 
 /- [fips_implementations::algorithms::aes::copy_initial_key]: loop 0:
    Source: 'src/algorithms/aes.rs', lines 91:4-94:5 -/
@@ -508,7 +543,8 @@ def algorithms.aes.key_expansion
   let i ← nr + 1#usize
   let total_words ← 4#usize * i
   let i1 ← total_words * 4#usize
-  let w := alloc.vec.Vec.with_capacity U8 i1
+  -- **MANUAL CODE**: remove U8
+  let w := alloc.vec.Vec.with_capacity /-U8-/ i1
   let w1 ← algorithms.aes.copy_initial_key w key nk
   algorithms.aes.expand_key_schedule w1 nk total_words
 
@@ -1077,10 +1113,11 @@ def
   :=
   let (i, i1, i2, i3) := self
   let (i4, i5, i6, i7) := rhs
-  let i8 := core.num.u32.wrapping_add i i4
-  let i9 := core.num.u32.wrapping_add i1 i5
-  let i10 := core.num.u32.wrapping_add i2 i6
-  let i11 := core.num.u32.wrapping_add i3 i7
+  -- **MANUAL CODE**: TODO implement a dummy wrapping_add
+  let i8 := sorry -- core.num.u32.wrapping_add i i4
+  let i9 := sorry -- core.num.u32.wrapping_add i1 i5
+  let i10 := sorry -- core.num.u32.wrapping_add i2 i6
+  let i11 := sorry -- core.num.u32.wrapping_add i3 i7
   Result.ok (i8, i9, i10, i11)
 
 /- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::arith::Add<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}]
@@ -1110,10 +1147,11 @@ def
   :=
   let (i, i1, i2, i3) := self
   let (i4, i5, i6, i7) := rhs
-  let i8 := core.num.u32.wrapping_sub i i4
-  let i9 := core.num.u32.wrapping_sub i1 i5
-  let i10 := core.num.u32.wrapping_sub i2 i6
-  let i11 := core.num.u32.wrapping_sub i3 i7
+  -- **MANUAL CODE**: TODO implement a dummy wrapping_sub
+  let i8 := sorry -- core.num.u32.wrapping_sub i i4
+  let i9 := sorry -- core.num.u32.wrapping_sub i1 i5
+  let i10 := sorry -- core.num.u32.wrapping_sub i2 i6
+  let i11 := sorry -- core.num.u32.wrapping_sub i3 i7
   Result.ok (i8, i9, i10, i11)
 
 /- Trait implementation: [fips_implementations::algorithms::sha1::{core::ops::arith::Sub<fips_implementations::algorithms::sha1::u32x4> for fips_implementations::algorithms::sha1::u32x4}#1]
@@ -1376,7 +1414,7 @@ def algorithms.sha1.sha1_first (w0 : algorithms.sha1.u32x4) : Result U32 :=
 def algorithms.sha1.sha1_first_add
   (e : U32) (w0 : algorithms.sha1.u32x4) : Result algorithms.sha1.u32x4 :=
   let (a, b, c, d) := w0
-  let i := core.num.u32.wrapping_add e a
+  let i := sorry -- core.num.u32.wrapping_add e a
   Result.ok (i, b, c, d)
 
 /- [fips_implementations::algorithms::sha1::sha1msg1]:
@@ -1398,10 +1436,10 @@ def algorithms.sha1.sha1msg2
   :=
   let (x0, x1, x2, x3) := a
   let (_, w13, w14, w15) := b
-  let w16 := core.num.u32.rotate_left (x0 ^^^ w13) 1#u32
-  let w17 := core.num.u32.rotate_left (x1 ^^^ w14) 1#u32
-  let w18 := core.num.u32.rotate_left (x2 ^^^ w15) 1#u32
-  let w19 := core.num.u32.rotate_left (x3 ^^^ w16) 1#u32
+  let w16 := sorry -- core.num.u32.rotate_left (x0 ^^^ w13) 1#u32
+  let w17 := sorry -- core.num.u32.rotate_left (x1 ^^^ w14) 1#u32
+  let w18 := sorry -- core.num.u32.rotate_left (x2 ^^^ w15) 1#u32
+  let w19 := sorry -- core.num.u32.rotate_left (x3 ^^^ w16) 1#u32
   Result.ok (w16, w17, w18, w19)
 
 /- [fips_implementations::algorithms::sha1::sha1_first_half]:
@@ -1412,7 +1450,7 @@ def algorithms.sha1.sha1_first_half
   :=
   do
   let i ← algorithms.sha1.sha1_first abcd
-  let i1 := core.num.u32.rotate_left i 30#u32
+  let i1 := sorry -- core.num.u32.rotate_left i 30#u32
   algorithms.sha1.sha1_first_add i1 msg
 
 /- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K0V]
@@ -1435,27 +1473,28 @@ def algorithms.sha1.sha1rnds4c
   :=
   let (a, b, c, d) := abcd
   let (t, u, v, w) := msg
-  let i := core.num.u32.rotate_left a 5#u32
-  let i1 := core.num.u32.wrapping_add 0#u32 i
-  let i2 := core.num.u32.wrapping_add i1 (d ^^^ b &&& c ^^^ d)
-  let e := core.num.u32.wrapping_add i2 t
-  let b1 := core.num.u32.rotate_left b 30#u32
-  let i3 := core.num.u32.rotate_left e 5#u32
-  let i4 := core.num.u32.wrapping_add d i3
-  let i5 := core.num.u32.wrapping_add i4 (c ^^^ a &&& b1 ^^^ c)
-  let d1 := core.num.u32.wrapping_add i5 u
-  let a1 := core.num.u32.rotate_left a 30#u32
-  let i6 := core.num.u32.rotate_left d1 5#u32
-  let i7 := core.num.u32.wrapping_add c i6
-  let i8 := core.num.u32.wrapping_add i7 (b1 ^^^ e &&& a1 ^^^ b1)
-  let c1 := core.num.u32.wrapping_add i8 v
-  let e1 := core.num.u32.rotate_left e 30#u32
-  let i9 := core.num.u32.rotate_left c1 5#u32
-  let i10 := core.num.u32.wrapping_add b1 i9
-  let i11 := core.num.u32.wrapping_add i10 (a1 ^^^ d1 &&& e1 ^^^ a1)
-  let b2 := core.num.u32.wrapping_add i11 w
-  let d2 := core.num.u32.rotate_left d1 30#u32
-  Result.ok (b2, c1, d2, e1)
+  sorry
+  -- let i := core.num.u32.rotate_left a 5#u32
+  -- let i1 := core.num.u32.wrapping_add 0#u32 i
+  -- let i2 := core.num.u32.wrapping_add i1 (d ^^^ b &&& c ^^^ d)
+  -- let e := core.num.u32.wrapping_add i2 t
+  -- let b1 := core.num.u32.rotate_left b 30#u32
+  -- let i3 := core.num.u32.rotate_left e 5#u32
+  -- let i4 := core.num.u32.wrapping_add d i3
+  -- let i5 := core.num.u32.wrapping_add i4 (c ^^^ a &&& b1 ^^^ c)
+  -- let d1 := core.num.u32.wrapping_add i5 u
+  -- let a1 := core.num.u32.rotate_left a 30#u32
+  -- let i6 := core.num.u32.rotate_left d1 5#u32
+  -- let i7 := core.num.u32.wrapping_add c i6
+  -- let i8 := core.num.u32.wrapping_add i7 (b1 ^^^ e &&& a1 ^^^ b1)
+  -- let c1 := core.num.u32.wrapping_add i8 v
+  -- let e1 := core.num.u32.rotate_left e 30#u32
+  -- let i9 := core.num.u32.rotate_left c1 5#u32
+  -- let i10 := core.num.u32.wrapping_add b1 i9
+  -- let i11 := core.num.u32.wrapping_add i10 (a1 ^^^ d1 &&& e1 ^^^ a1)
+  -- let b2 := core.num.u32.wrapping_add i11 w
+  -- let d2 := core.num.u32.rotate_left d1 30#u32
+  -- Result.ok (b2, c1, d2, e1)
 
 /- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K1V]
    Source: 'src/algorithms/sha1.rs', lines 193:4-193:45 -/
@@ -1477,27 +1516,28 @@ def algorithms.sha1.sha1rnds4p
   :=
   let (a, b, c, d) := abcd
   let (t, u, v, w) := msg
-  let i := core.num.u32.rotate_left a 5#u32
-  let i1 := core.num.u32.wrapping_add 0#u32 i
-  let i2 := core.num.u32.wrapping_add i1 (b ^^^ c ^^^ d)
-  let e := core.num.u32.wrapping_add i2 t
-  let b1 := core.num.u32.rotate_left b 30#u32
-  let i3 := core.num.u32.rotate_left e 5#u32
-  let i4 := core.num.u32.wrapping_add d i3
-  let i5 := core.num.u32.wrapping_add i4 (a ^^^ b1 ^^^ c)
-  let d1 := core.num.u32.wrapping_add i5 u
-  let a1 := core.num.u32.rotate_left a 30#u32
-  let i6 := core.num.u32.rotate_left d1 5#u32
-  let i7 := core.num.u32.wrapping_add c i6
-  let i8 := core.num.u32.wrapping_add i7 (e ^^^ a1 ^^^ b1)
-  let c1 := core.num.u32.wrapping_add i8 v
-  let e1 := core.num.u32.rotate_left e 30#u32
-  let i9 := core.num.u32.rotate_left c1 5#u32
-  let i10 := core.num.u32.wrapping_add b1 i9
-  let i11 := core.num.u32.wrapping_add i10 (d1 ^^^ e1 ^^^ a1)
-  let b2 := core.num.u32.wrapping_add i11 w
-  let d2 := core.num.u32.rotate_left d1 30#u32
-  Result.ok (b2, c1, d2, e1)
+  sorry
+  -- let i := core.num.u32.rotate_left a 5#u32
+  -- let i1 := core.num.u32.wrapping_add 0#u32 i
+  -- let i2 := core.num.u32.wrapping_add i1 (b ^^^ c ^^^ d)
+  -- let e := core.num.u32.wrapping_add i2 t
+  -- let b1 := core.num.u32.rotate_left b 30#u32
+  -- let i3 := core.num.u32.rotate_left e 5#u32
+  -- let i4 := core.num.u32.wrapping_add d i3
+  -- let i5 := core.num.u32.wrapping_add i4 (a ^^^ b1 ^^^ c)
+  -- let d1 := core.num.u32.wrapping_add i5 u
+  -- let a1 := core.num.u32.rotate_left a 30#u32
+  -- let i6 := core.num.u32.rotate_left d1 5#u32
+  -- let i7 := core.num.u32.wrapping_add c i6
+  -- let i8 := core.num.u32.wrapping_add i7 (e ^^^ a1 ^^^ b1)
+  -- let c1 := core.num.u32.wrapping_add i8 v
+  -- let e1 := core.num.u32.rotate_left e 30#u32
+  -- let i9 := core.num.u32.rotate_left c1 5#u32
+  -- let i10 := core.num.u32.wrapping_add b1 i9
+  -- let i11 := core.num.u32.wrapping_add i10 (d1 ^^^ e1 ^^^ a1)
+  -- let b2 := core.num.u32.wrapping_add i11 w
+  -- let d2 := core.num.u32.rotate_left d1 30#u32
+  -- Result.ok (b2, c1, d2, e1)
 
 /- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K2V]
    Source: 'src/algorithms/sha1.rs', lines 194:4-194:45 -/
@@ -1519,28 +1559,29 @@ def algorithms.sha1.sha1rnds4m
   :=
   let (a, b, c, d) := abcd
   let (t, u, v, w) := msg
-  let i := core.num.u32.rotate_left a 5#u32
-  let i1 := core.num.u32.wrapping_add 0#u32 i
-  let i2 := core.num.u32.wrapping_add i1 (b &&& c ^^^ b &&& d ^^^ c &&& d)
-  let e := core.num.u32.wrapping_add i2 t
-  let b1 := core.num.u32.rotate_left b 30#u32
-  let i3 := core.num.u32.rotate_left e 5#u32
-  let i4 := core.num.u32.wrapping_add d i3
-  let i5 := core.num.u32.wrapping_add i4 (a &&& b1 ^^^ a &&& c ^^^ b1 &&& c)
-  let d1 := core.num.u32.wrapping_add i5 u
-  let a1 := core.num.u32.rotate_left a 30#u32
-  let i6 := core.num.u32.rotate_left d1 5#u32
-  let i7 := core.num.u32.wrapping_add c i6
-  let i8 := core.num.u32.wrapping_add i7 (e &&& a1 ^^^ e &&& b1 ^^^ a1 &&& b1)
-  let c1 := core.num.u32.wrapping_add i8 v
-  let e1 := core.num.u32.rotate_left e 30#u32
-  let i9 := core.num.u32.rotate_left c1 5#u32
-  let i10 := core.num.u32.wrapping_add b1 i9
-  let i11 :=
-    core.num.u32.wrapping_add i10 (d1 &&& e1 ^^^ d1 &&& a1 ^^^ e1 &&& a1)
-  let b2 := core.num.u32.wrapping_add i11 w
-  let d2 := core.num.u32.rotate_left d1 30#u32
-  Result.ok (b2, c1, d2, e1)
+  sorry
+  -- let i := core.num.u32.rotate_left a 5#u32
+  -- let i1 := core.num.u32.wrapping_add 0#u32 i
+  -- let i2 := core.num.u32.wrapping_add i1 (b &&& c ^^^ b &&& d ^^^ c &&& d)
+  -- let e := core.num.u32.wrapping_add i2 t
+  -- let b1 := core.num.u32.rotate_left b 30#u32
+  -- let i3 := core.num.u32.rotate_left e 5#u32
+  -- let i4 := core.num.u32.wrapping_add d i3
+  -- let i5 := core.num.u32.wrapping_add i4 (a &&& b1 ^^^ a &&& c ^^^ b1 &&& c)
+  -- let d1 := core.num.u32.wrapping_add i5 u
+  -- let a1 := core.num.u32.rotate_left a 30#u32
+  -- let i6 := core.num.u32.rotate_left d1 5#u32
+  -- let i7 := core.num.u32.wrapping_add c i6
+  -- let i8 := core.num.u32.wrapping_add i7 (e &&& a1 ^^^ e &&& b1 ^^^ a1 &&& b1)
+  -- let c1 := core.num.u32.wrapping_add i8 v
+  -- let e1 := core.num.u32.rotate_left e 30#u32
+  -- let i9 := core.num.u32.rotate_left c1 5#u32
+  -- let i10 := core.num.u32.wrapping_add b1 i9
+  -- let i11 :=
+  --   core.num.u32.wrapping_add i10 (d1 &&& e1 ^^^ d1 &&& a1 ^^^ e1 &&& a1)
+  -- let b2 := core.num.u32.wrapping_add i11 w
+  -- let d2 := core.num.u32.rotate_left d1 30#u32
+  -- Result.ok (b2, c1, d2, e1)
 
 /- [fips_implementations::algorithms::sha1::sha1_digest_round_x4::K3V]
    Source: 'src/algorithms/sha1.rs', lines 195:4-195:45 -/
@@ -1568,25 +1609,26 @@ def algorithms.sha1.sha1_digest_round_x4
         work algorithms.sha1.sha1_digest_round_x4.K0V
     algorithms.sha1.sha1rnds4c abcd ux
   | 1#scalar =>
-    do
-    let ux ←
-      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
-        work algorithms.sha1.sha1_digest_round_x4.K1V
-    algorithms.sha1.sha1rnds4p abcd ux
+    do sorry
+    -- let ux ←
+    --   algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+    --     work algorithms.sha1.sha1_digest_round_x4.K1V
+    -- algorithms.sha1.sha1rnds4p abcd ux
   | 2#scalar =>
-    do
-    let ux ←
-      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
-        work algorithms.sha1.sha1_digest_round_x4.K2V
-    algorithms.sha1.sha1rnds4m abcd ux
+    do sorry
+    -- let ux ←
+    --   algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+    --     work algorithms.sha1.sha1_digest_round_x4.K2V
+    -- algorithms.sha1.sha1rnds4m abcd ux
   | 3#scalar =>
-    do
-    let ux ←
-      algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
-        work algorithms.sha1.sha1_digest_round_x4.K3V
-    algorithms.sha1.sha1rnds4p abcd ux
+    do sorry
+    -- let ux ←
+    --   algorithms.sha1.Addfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.add
+    --     work algorithms.sha1.sha1_digest_round_x4.K3V
+    -- algorithms.sha1.sha1rnds4p abcd ux
   | _ => Result.ok (0#u32, 0#u32, 0#u32, 0#u32)
 
+set_option maxRecDepth 1000
 /- [fips_implementations::algorithms::sha1::process]: loop 0:
    Source: 'src/algorithms/sha1.rs', lines 326:2-333:3 -/
 divergent def algorithms.sha1.process_loop
@@ -1604,14 +1646,14 @@ divergent def algorithms.sha1.process_loop
     let i3 ← off + 2#usize
     let i4 ← Array.index_usize block i3
     let i5 ← Scalar.cast .U32 i4
-    let i6 ← i5 <<< 8#i32
+    let i6 ← i5 <<< 8#u32
     let i7 ← off + 1#usize
     let i8 ← Array.index_usize block i7
     let i9 ← Scalar.cast .U32 i8
-    let i10 ← i9 <<< 16#i32
+    let i10 ← i9 <<< 16#u32
     let i11 ← Array.index_usize block off
     let i12 ← Scalar.cast .U32 i11
-    let i13 ← i12 <<< 24#i32
+    let i13 ← i12 <<< 24#u32
     let (_, index_mut_back) ← Array.index_mut_usize words index
     let index1 ← index + 1#usize
     let words1 := index_mut_back (i2 ||| i6 ||| i10 ||| i13)
@@ -1765,16 +1807,16 @@ divergent def algorithms.sha1.process_loop
     let _ ← algorithms.sha1.sha1_first h19
     let (a, b, c, d) := h09
     let i21 ← Array.index_usize state 0#usize
-    let i22 := core.num.u32.wrapping_add i21 a
+    let i22 := sorry -- core.num.u32.wrapping_add i21 a
     let state1 ← Array.update_usize state 0#usize i22
     let i23 ← Array.index_usize state1 1#usize
-    let i24 := core.num.u32.wrapping_add i23 b
+    let i24 := sorry -- core.num.u32.wrapping_add i23 b
     let state2 ← Array.update_usize state1 1#usize i24
     let i25 ← Array.index_usize state2 2#usize
-    let i26 := core.num.u32.wrapping_add i25 c
+    let i26 := sorry -- core.num.u32.wrapping_add i25 c
     let state3 ← Array.update_usize state2 2#usize i26
     let i27 ← Array.index_usize state3 3#usize
-    let i28 := core.num.u32.wrapping_add i27 d
+    let i28 := sorry -- core.num.u32.wrapping_add i27 d
     let state4 ← Array.update_usize state3 3#usize i28
     let _ ← Array.index_usize state4 4#usize
     let _ ← Array.index_mut_usize state4 4#usize
@@ -1843,34 +1885,35 @@ divergent def algorithms.sha1.pad_message_loop
   else
     do
     let length_bytes := Array.repeat 8#usize 0#u8
-    let i1 ← msg_len_bits >>> 56#i32
+    -- **MANUAL CODE**: change to #u64 for everything below
+    let i1 ← msg_len_bits >>> 56#u64
     let (_, index_mut_back) ← Array.index_mut_usize length_bytes 0#usize
     let i2 ← Scalar.cast .U8 (i1 &&& 255#u64)
-    let i3 ← msg_len_bits >>> 48#i32
+    let i3 ← msg_len_bits >>> 48#u64
     let length_bytes1 := index_mut_back i2
     let (_, index_mut_back1) ← Array.index_mut_usize length_bytes1 1#usize
     let i4 ← Scalar.cast .U8 (i3 &&& 255#u64)
-    let i5 ← msg_len_bits >>> 40#i32
+    let i5 ← msg_len_bits >>> 40#u64
     let length_bytes2 := index_mut_back1 i4
     let (_, index_mut_back2) ← Array.index_mut_usize length_bytes2 2#usize
     let i6 ← Scalar.cast .U8 (i5 &&& 255#u64)
-    let i7 ← msg_len_bits >>> 32#i32
+    let i7 ← msg_len_bits >>> 32#u64
     let length_bytes3 := index_mut_back2 i6
     let (_, index_mut_back3) ← Array.index_mut_usize length_bytes3 3#usize
     let i8 ← Scalar.cast .U8 (i7 &&& 255#u64)
-    let i9 ← msg_len_bits >>> 24#i32
+    let i9 ← msg_len_bits >>> 24#u64
     let length_bytes4 := index_mut_back3 i8
     let (_, index_mut_back4) ← Array.index_mut_usize length_bytes4 4#usize
     let i10 ← Scalar.cast .U8 (i9 &&& 255#u64)
-    let i11 ← msg_len_bits >>> 16#i32
+    let i11 ← msg_len_bits >>> 16#u64
     let length_bytes5 := index_mut_back4 i10
     let (_, index_mut_back5) ← Array.index_mut_usize length_bytes5 5#usize
     let i12 ← Scalar.cast .U8 (i11 &&& 255#u64)
-    let i13 ← msg_len_bits >>> 8#i32
+    let i13 ← msg_len_bits >>> 8#u64
     let length_bytes6 := index_mut_back5 i12
     let (_, index_mut_back6) ← Array.index_mut_usize length_bytes6 6#usize
     let i14 ← Scalar.cast .U8 (i13 &&& 255#u64)
-    let i15 ← msg_len_bits >>> 0#i32
+    let i15 ← msg_len_bits >>> 0#u64
     let length_bytes7 := index_mut_back6 i14
     let (_, index_mut_back7) ← Array.index_mut_usize length_bytes7 7#usize
     let i16 ← Scalar.cast .U8 (i15 &&& 255#u64)
@@ -1888,7 +1931,8 @@ def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   let i2 := Slice.len msg
   let i3 ← i2 + 1#usize
   let i4 ← i3 + 64#usize
-  let padded_msg := alloc.vec.Vec.with_capacity U8 i4
+  -- **MANUAL CODE**: remove U8
+  let padded_msg := alloc.vec.Vec.with_capacity i4
   let padded_msg1 ←
     alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg msg
   let padded_msg2 ← alloc.vec.Vec.push padded_msg1 128#u8
@@ -1913,16 +1957,17 @@ divergent def algorithms.sha1.hash_to_vec_loop
   then
     do
     let word ← Array.index_usize final_hash index
-    let i1 ← word >>> 24#i32
+    -- **MANUAL CODE**: change to #u32 for everything below.
+    let i1 ← word >>> 24#u32
     let i2 ← Scalar.cast .U8 (i1 &&& 255#u32)
     let result_bytes1 ← alloc.vec.Vec.push result_bytes i2
-    let i3 ← word >>> 16#i32
+    let i3 ← word >>> 16#u32
     let i4 ← Scalar.cast .U8 (i3 &&& 255#u32)
     let result_bytes2 ← alloc.vec.Vec.push result_bytes1 i4
-    let i5 ← word >>> 8#i32
+    let i5 ← word >>> 8#u32
     let i6 ← Scalar.cast .U8 (i5 &&& 255#u32)
     let result_bytes3 ← alloc.vec.Vec.push result_bytes2 i6
-    let i7 ← word >>> 0#i32
+    let i7 ← word >>> 0#u32
     let i8 ← Scalar.cast .U8 (i7 &&& 255#u32)
     let result_bytes4 ← alloc.vec.Vec.push result_bytes3 i8
     let index1 ← index + 1#usize

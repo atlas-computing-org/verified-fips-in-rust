@@ -440,16 +440,29 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
   }
 
   // Step 5: Append message length as 64-bit big-endian integer
-  let mut length_bytes = [0u8; 8];
-  length_bytes[0] = ((msg_len_bits >> 56) & 0xFF) as u8;
-  length_bytes[1] = ((msg_len_bits >> 48) & 0xFF) as u8;
-  length_bytes[2] = ((msg_len_bits >> 40) & 0xFF) as u8;
-  length_bytes[3] = ((msg_len_bits >> 32) & 0xFF) as u8;
-  length_bytes[4] = ((msg_len_bits >> 24) & 0xFF) as u8;
-  length_bytes[5] = ((msg_len_bits >> 16) & 0xFF) as u8;
-  length_bytes[6] = ((msg_len_bits >>  8) & 0xFF) as u8;
-  length_bytes[7] = ((msg_len_bits >>  0) & 0xFF) as u8;
-  padded_msg.extend_from_slice(&length_bytes);
+  let mut length_bytes = [
+    ((msg_len_bits >> 56u64) & 0xFF) as u8,
+    ((msg_len_bits >> 48u64) & 0xFF) as u8,
+    ((msg_len_bits >> 40u64) & 0xFF) as u8,
+    ((msg_len_bits >> 32u64) & 0xFF) as u8,
+    ((msg_len_bits >> 24u64) & 0xFF) as u8,
+    ((msg_len_bits >> 16u64) & 0xFF) as u8,
+    ((msg_len_bits >>  8u64) & 0xFF) as u8,
+    ((msg_len_bits >>  0u64) & 0xFF) as u8,
+  ];
+
+// **MANUAL CODE**: avoid mutable assignments
+//   let mut length_bytes = [0u8; 8];
+//   // (Hanting): change to u64 to match types
+//   length_bytes[0] = ((msg_len_bits >> 56u64) & 0xFF) as u8;
+//   length_bytes[1] = ((msg_len_bits >> 48u64) & 0xFF) as u8;
+//   length_bytes[2] = ((msg_len_bits >> 40u64) & 0xFF) as u8;
+//   length_bytes[3] = ((msg_len_bits >> 32u64) & 0xFF) as u8;
+//   length_bytes[4] = ((msg_len_bits >> 24u64) & 0xFF) as u8;
+//   length_bytes[5] = ((msg_len_bits >> 16u64) & 0xFF) as u8;
+//   length_bytes[6] = ((msg_len_bits >>  8u64) & 0xFF) as u8;
+//   length_bytes[7] = ((msg_len_bits >>  0u64) & 0xFF) as u8;
+//   padded_msg.extend_from_slice(&length_bytes);
 
   padded_msg
 }
