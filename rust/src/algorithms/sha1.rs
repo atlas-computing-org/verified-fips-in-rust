@@ -147,13 +147,13 @@ const K1: u32 = 0x6ED9EBA1u32;
 const K2: u32 = 0x8F1BBCDCu32;
 const K3: u32 = 0xCA62C1D6u32;
 
-/// Not an intrinsic, but gets the first element of a vector.
+/// Not an intrinsic, but gets the first element of a u32x4.
 #[inline]
 fn sha1_first(w0: u32x4) -> u32 {
     w0.0
 }
 
-/// Not an intrinsic, but adds a word to the first element of a vector.
+/// Not an intrinsic, but adds a word to the first element of a u32x4.
 #[inline]
 fn sha1_first_add(e: u32, w0: u32x4) -> u32x4 {
     let u32x4(a, b, c, d) = w0;
