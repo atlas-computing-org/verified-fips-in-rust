@@ -300,8 +300,9 @@ fn sha1rnds4m(abcd: u32x4, msg: u32x4) -> u32x4 {
     u32x4(b, c, d, e)
 }
 
-// Change: Factor out loop to make the Aeneas code generation cleaner.
-fn process_loop(block: &[u8; 64], words: &mut [u32; 16]) {
+/// Change: Factor loop out to simplify the code generation.
+fn process_loop(block: &[u8; 64]) -> [u32; 16] {
+    let mut words = [0u32; 16];
     let mut index = 0;
     while index < 16 {
         let off = index * 4;
@@ -311,75 +312,159 @@ fn process_loop(block: &[u8; 64], words: &mut [u32; 16]) {
             | ((block[off] as u32) << 24);
         index += 1;
     }
+    words
+}
+
+macro_rules! schedule {
+    ($v0:expr, $v1:expr, $v2:expr, $v3:expr) => {
+        sha1msg2(sha1msg1($v0, $v1) ^ $v2, $v3)
+    };
+}
+
+macro_rules! rounds4 {
+    ($h0:ident, $h1:ident, $wk:expr, $i:expr) => {
+        sha1_digest_round_x4($h0, sha1_first_half($h1, $wk), $i)
+    };
+}
+
+/// Rounds 0..20
+fn process_rounds_0(
+    mut h0: u32x4,
+    state: &[u32; 5],
+    words: &[u32; 16],
+) -> (u32x4, u32x4, u32x4, u32x4, u32x4, u32x4) {
+    let w0 = u32x4(words[0], words[1], words[2], words[3]);
+    let mut h1 = sha1_digest_round_x4(h0, sha1_first_add(state[4], w0), 0);
+    let w1 = u32x4(words[4], words[5], words[6], words[7]);
+    h0 = rounds4!(h1, h0, w1, 0);
+    let w2 = u32x4(words[8], words[9], words[10], words[11]);
+    h1 = rounds4!(h0, h1, w2, 0);
+    let w3 = u32x4(words[12], words[13], words[14], words[15]);
+    h0 = rounds4!(h1, h0, w3, 0);
+    let w4 = schedule!(w0, w1, w2, w3);
+    h1 = rounds4!(h0, h1, w4, 0);
+    (h0, h1, w1, w2, w3, w4)
+}
+
+fn process_rounds_i(
+    mut h0: u32x4,
+    mut h1: u32x4,
+    w1: u32x4,
+    w2: u32x4,
+    w3: u32x4,
+    w4: u32x4,
+    i: i8,
+) -> (u32x4, u32x4, u32x4, u32x4, u32x4, u32x4) {
+    let w0 = schedule!(w1, w2, w3, w4);
+    h0 = rounds4!(h1, h0, w0, i);
+    let w1 = schedule!(w2, w3, w4, w0);
+    h1 = rounds4!(h0, h1, w1, i);
+    let w2 = schedule!(w3, w4, w0, w1);
+    h0 = rounds4!(h1, h0, w2, i);
+    let w3 = schedule!(w4, w0, w1, w2);
+    h1 = rounds4!(h0, h1, w3, i);
+    let w4 = schedule!(w0, w1, w2, w3);
+    h0 = rounds4!(h1, h0, w4, i);
+    (h0, h1, w1, w2, w3, w4)
 }
 
 fn process(state: &mut [u32; 5], block: &[u8; 64]) {
-    let mut words = [0u32; 16];
-    process_loop(block, &mut words);
+    let words = process_loop(block);
+    let h0 = u32x4(state[0], state[1], state[2], state[3]);
 
-    macro_rules! schedule {
-        ($v0:expr, $v1:expr, $v2:expr, $v3:expr) => {
-            sha1msg2(sha1msg1($v0, $v1) ^ $v2, $v3)
-        };
-    }
-
-    macro_rules! rounds4 {
-        ($h0:ident, $h1:ident, $wk:expr, $i:expr) => {
-            sha1_digest_round_x4($h0, sha1_first_half($h1, $wk), $i)
-        };
-    }
-
-    // Rounds 0..20
-    let mut h0 = u32x4(state[0], state[1], state[2], state[3]);
-    let mut w0 = u32x4(words[0], words[1], words[2], words[3]);
-    let mut h1 = sha1_digest_round_x4(h0, sha1_first_add(state[4], w0), 0);
-    let mut w1 = u32x4(words[4], words[5], words[6], words[7]);
-    h0 = rounds4!(h1, h0, w1, 0);
-    let mut w2 = u32x4(words[8], words[9], words[10], words[11]);
-    h1 = rounds4!(h0, h1, w2, 0);
-    let mut w3 = u32x4(words[12], words[13], words[14], words[15]);
-    h0 = rounds4!(h1, h0, w3, 0);
-    let mut w4 = schedule!(w0, w1, w2, w3);
-    h1 = rounds4!(h0, h1, w4, 0);
-
-    // Rounds 20..40
-    w0 = schedule!(w1, w2, w3, w4);
-    h0 = rounds4!(h1, h0, w0, 1);
-    w1 = schedule!(w2, w3, w4, w0);
-    h1 = rounds4!(h0, h1, w1, 1);
-    w2 = schedule!(w3, w4, w0, w1);
-    h0 = rounds4!(h1, h0, w2, 1);
-    w3 = schedule!(w4, w0, w1, w2);
-    h1 = rounds4!(h0, h1, w3, 1);
-    w4 = schedule!(w0, w1, w2, w3);
-    h0 = rounds4!(h1, h0, w4, 1);
-
-    // Rounds 40..60
-    w0 = schedule!(w1, w2, w3, w4);
-    h1 = rounds4!(h0, h1, w0, 2);
-    w1 = schedule!(w2, w3, w4, w0);
-    h0 = rounds4!(h1, h0, w1, 2);
-    w2 = schedule!(w3, w4, w0, w1);
-    h1 = rounds4!(h0, h1, w2, 2);
-    w3 = schedule!(w4, w0, w1, w2);
-    h0 = rounds4!(h1, h0, w3, 2);
-    w4 = schedule!(w0, w1, w2, w3);
-    h1 = rounds4!(h0, h1, w4, 2);
-
-    // Rounds 60..80
-    w0 = schedule!(w1, w2, w3, w4);
-    h0 = rounds4!(h1, h0, w0, 3);
-    w1 = schedule!(w2, w3, w4, w0);
-    h1 = rounds4!(h0, h1, w1, 3);
-    w2 = schedule!(w3, w4, w0, w1);
-    h0 = rounds4!(h1, h0, w2, 3);
-    w3 = schedule!(w4, w0, w1, w2);
-    h1 = rounds4!(h0, h1, w3, 3);
-    w4 = schedule!(w0, w1, w2, w3);
-    h0 = rounds4!(h1, h0, w4, 3);
+    let (h0, h1, w1, w2, w3, w4) = process_rounds_0(h0, state, &words);
+    let (h0, h1, w1, w2, w3, w4) = process_rounds_i(h0, h1, w1, w2, w3, w4, 1);
+    let (h0, h1, w1, w2, w3, w4) = process_rounds_i(h0, h1, w1, w2, w3, w4, 2);
+    let (h0, h1, _, _, _, _) = process_rounds_i(h0, h1, w1, w2, w3, w4, 3);
 
     let e = sha1_first(h1).rotate_left(30);
     let u32x4(a, b, c, d) = h0;
+
+    state[0] = state[0].wrapping_add(a);
+    state[1] = state[1].wrapping_add(b);
+    state[2] = state[2].wrapping_add(c);
+    state[3] = state[3].wrapping_add(d);
+    state[4] = state[4].wrapping_add(e);
+}
+
+/// Change: Aux version that is closer to Lean reference.
+fn process_loop_aux(block: &[u8; 64], w: &mut Vec<u32>) {
+    let mut i = 0;
+    while i < 16 {
+        let off = i * 4;
+        w[i] = ((block[off] as u32) << 24)
+            | ((block[off + 1] as u32) << 16)
+            | ((block[off + 2] as u32) << 8)
+            | (block[off + 3] as u32);
+        i += 1;
+    }
+}
+
+/// Change: Aux version that is closer to Lean reference.
+fn process_w_aux(w: &mut Vec<u32>) {
+    let mut i = 16;
+    while i < 80 {
+        w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]).rotate_left(1);
+        i += 1;
+    }
+}
+
+/// Change: Aux version that is closer to Lean reference.
+fn process_core_aux(state: &[u32; 5], w: &mut Vec<u32>) -> [u32; 5] {
+    let mut a = state[0];
+    let mut b = state[1];
+    let mut c = state[2];
+    let mut d = state[3];
+    let mut e = state[4];
+    
+    let mut i = 0;
+    while i < 80 {
+        let (f, k) = match i {
+            0..=19 => {
+                let f = (b & c) | (!b & d);
+                (f, 0x5A827999u32)
+            }
+            20..=39 => {
+                let f = b ^ c ^ d;
+                (f, 0x6ED9EBA1u32)
+            }
+            40..=59 => {
+                let f = (b & c) | (b & d) | (c & d);
+                (f, 0x8F1BBCDCu32)
+            }
+            _ => {
+                let f: u32 = b ^ c ^ d;
+                (f, 0xCA62C1D6u32)
+            }
+        };
+
+        let temp = a
+            .rotate_left(5)
+            .wrapping_add(f)
+            .wrapping_add(e)
+            .wrapping_add(k)
+            .wrapping_add(w[i]);
+
+        e = d;
+        d = c;
+        c = b.rotate_left(30);
+        b = a;
+        a = temp;
+        i += 1;
+    }
+
+    [a, b, c, d, e]
+}
+
+/// Change: Aux version that is closer to Lean reference.
+/// We also break up the 3 loops inside into 3 separate functions, as Aeneas can't handle multiple loops.
+fn process_aux(state: &mut [u32; 5], block: &[u8; 64]) {
+    let mut w = vec![0u32; 80];
+    process_loop_aux(block, &mut w);
+    
+    process_w_aux(&mut w);
+
+    let [a, b, c, d, e] = process_core_aux(state, &mut w);
 
     state[0] = state[0].wrapping_add(a);
     state[1] = state[1].wrapping_add(b);
@@ -405,6 +490,15 @@ fn chunkify(msg: &[u8]) -> Vec<[u8; CHUNK_SIZE]> {
     chunks
 }
 
+/// Change: Factor loop out to simplify the code generation.
+fn pad_message_loop(padded_msg: &mut Vec<u8>, zero_padding_length: usize) {
+    let mut i = 0;
+    while i < zero_padding_length {
+        padded_msg.push(0x00); // Append zero byte
+        i += 1;
+    }
+}
+
 fn pad_message(msg: &[u8]) -> Vec<u8> {
     // Step 1: Compute message length in bits
     let msg_len_bits = (msg.len() as u64) * 8;
@@ -418,14 +512,11 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
     let zero_padding_length = (56 - ((padded_msg.len()) % 64)) % 64;
 
     // Step 4: Append zero padding
-    let mut i = 0;
-    while i < zero_padding_length {
-        padded_msg.push(0x00); // Append zero byte
-        i += 1;
-    }
+    pad_message_loop(&mut padded_msg, zero_padding_length);
 
     // Step 5: Append message length as 64-bit big-endian integer
-    let mut length_bytes = [
+    // Change: Avoid mutable assignments and normalize to u64.
+    let mut length_bytes: [u8; 8] = [
         ((msg_len_bits >> 56u64) & 0xFF) as u8,
         ((msg_len_bits >> 48u64) & 0xFF) as u8,
         ((msg_len_bits >> 40u64) & 0xFF) as u8,
@@ -435,21 +526,8 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
         ((msg_len_bits >> 8u64) & 0xFF) as u8,
         ((msg_len_bits >> 0u64) & 0xFF) as u8,
     ];
-
-    // **MANUAL CODE**: avoid mutable assignments
-    //   let mut length_bytes = [0u8; 8];
-    //   // (Hanting): change to u64 to match types
-    //   length_bytes[0] = ((msg_len_bits >> 56u64) & 0xFF) as u8;
-    //   length_bytes[1] = ((msg_len_bits >> 48u64) & 0xFF) as u8;
-    //   length_bytes[2] = ((msg_len_bits >> 40u64) & 0xFF) as u8;
-    //   length_bytes[3] = ((msg_len_bits >> 32u64) & 0xFF) as u8;
-    //   length_bytes[4] = ((msg_len_bits >> 24u64) & 0xFF) as u8;
-    //   length_bytes[5] = ((msg_len_bits >> 16u64) & 0xFF) as u8;
-    //   length_bytes[6] = ((msg_len_bits >>  8u64) & 0xFF) as u8;
-    //   length_bytes[7] = ((msg_len_bits >>  0u64) & 0xFF) as u8;
-    //   padded_msg.extend_from_slice(&length_bytes);
-
     padded_msg.extend_from_slice(&length_bytes);
+
     padded_msg
 }
 
@@ -458,10 +536,11 @@ fn hash_to_vec(final_hash: [u32; 5]) -> Vec<u8> {
     let mut index = 0;
     while index < final_hash.len() {
         let word = final_hash[index];
-        result_bytes.push(((word >> 24) & 0xFF) as u8);
-        result_bytes.push(((word >> 16) & 0xFF) as u8);
-        result_bytes.push(((word >> 8) & 0xFF) as u8);
-        result_bytes.push(((word >> 0) & 0xFF) as u8);
+        // Change: Normalize to u32let
+        result_bytes.push(((word >> 24u32) & 0xFF) as u8);
+        result_bytes.push(((word >> 16u32) & 0xFF) as u8);
+        result_bytes.push(((word >> 8u32) & 0xFF) as u8);
+        result_bytes.push(((word >> 0u32) & 0xFF) as u8);
         index += 1;
     }
     result_bytes
@@ -475,6 +554,20 @@ fn hash(message: &[u8]) -> Vec<u8> {
     while chunk_index < chunks.len() {
         let chunk = &chunks[chunk_index];
         process(&mut state, chunk);
+        chunk_index += 1;
+    }
+    hash_to_vec(state)
+}
+
+/// Change: Aux version that is closer to Lean reference.
+fn hash_aux(message: &[u8]) -> Vec<u8> {
+    let padded_msg = pad_message(message);
+    let chunks = chunkify(&padded_msg);
+    let mut state = INITIAL_STATE;
+    let mut chunk_index = 0;
+    while chunk_index < chunks.len() {
+        let chunk = &chunks[chunk_index];
+        process_aux(&mut state, chunk);
         chunk_index += 1;
     }
     hash_to_vec(state)

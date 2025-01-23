@@ -8,971 +8,6 @@ set_option linter.unusedVariables false
 
 namespace fips_implementations
 
-/- [fips_implementations::algorithms::aes::test_bit]:
-   Source: 'src/algorithms/aes.rs', lines 2:0-4:1 -/
-def algorithms.aes.test_bit (b : U8) (i : U8) : Result Bool :=
-  do
-  let i1 ← b >>> i
-  Result.ok ((i1 &&& 1#u8) = 1#u8)
-
-/- [fips_implementations::algorithms::aes::xtime]:
-   Source: 'src/algorithms/aes.rs', lines 7:0-13:1 -/
-def algorithms.aes.xtime (b : U8) : Result U8 :=
-  do
-  let b1 ← algorithms.aes.test_bit b 7#u8
-  if b1
-  then do
-       let i ← b <<< 1#i32
-       Result.ok (i ^^^ 27#u8)
-  else b <<< 1#i32
-
-/- [fips_implementations::algorithms::aes::gf_mul]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 19:4-26:5 -/
-divergent def algorithms.aes.gf_mul_loop
-  (a : U8) (b : U8) (result : U8) (i : I32) : Result U8 :=
-  if i < 8#i32
-  then
-    if (b &&& 1#u8) = 1#u8
-    then
-      do
-      let a1 ← algorithms.aes.xtime a
-      let b1 ← b >>> 1#i32
-      let i1 ← i + 1#i32
-      algorithms.aes.gf_mul_loop a1 b1 (result ^^^ a) i1
-    else
-      do
-      let a1 ← algorithms.aes.xtime a
-      let b1 ← b >>> 1#i32
-      let i1 ← i + 1#i32
-      algorithms.aes.gf_mul_loop a1 b1 result i1
-  else Result.ok result
-
-/- [fips_implementations::algorithms::aes::gf_mul]:
-   Source: 'src/algorithms/aes.rs', lines 16:0-28:1 -/
-def algorithms.aes.gf_mul (a : U8) (b : U8) : Result U8 :=
-  algorithms.aes.gf_mul_loop a b 0#u8 0#i32
-
-/- [fips_implementations::algorithms::aes::SBOX]
-   Source: 'src/algorithms/aes.rs', lines 31:0-48:2 -/
-def algorithms.aes.SBOX_body : Result (Array U8 256#usize) :=
-  Result.ok
-  (Array.make 256#usize [
-    99#u8, 124#u8, 119#u8, 123#u8, 242#u8, 107#u8, 111#u8, 197#u8, 48#u8, 1#u8,
-    103#u8, 43#u8, 254#u8, 215#u8, 171#u8, 118#u8, 202#u8, 130#u8, 201#u8,
-    125#u8, 250#u8, 89#u8, 71#u8, 240#u8, 173#u8, 212#u8, 162#u8, 175#u8,
-    156#u8, 164#u8, 114#u8, 192#u8, 183#u8, 253#u8, 147#u8, 38#u8, 54#u8,
-    63#u8, 247#u8, 204#u8, 52#u8, 165#u8, 229#u8, 241#u8, 113#u8, 216#u8,
-    49#u8, 21#u8, 4#u8, 199#u8, 35#u8, 195#u8, 24#u8, 150#u8, 5#u8, 154#u8,
-    7#u8, 18#u8, 128#u8, 226#u8, 235#u8, 39#u8, 178#u8, 117#u8, 9#u8, 131#u8,
-    44#u8, 26#u8, 27#u8, 110#u8, 90#u8, 160#u8, 82#u8, 59#u8, 214#u8, 179#u8,
-    41#u8, 227#u8, 47#u8, 132#u8, 83#u8, 209#u8, 0#u8, 237#u8, 32#u8, 252#u8,
-    177#u8, 91#u8, 106#u8, 203#u8, 190#u8, 57#u8, 74#u8, 76#u8, 88#u8, 207#u8,
-    208#u8, 239#u8, 170#u8, 251#u8, 67#u8, 77#u8, 51#u8, 133#u8, 69#u8, 249#u8,
-    2#u8, 127#u8, 80#u8, 60#u8, 159#u8, 168#u8, 81#u8, 163#u8, 64#u8, 143#u8,
-    146#u8, 157#u8, 56#u8, 245#u8, 188#u8, 182#u8, 218#u8, 33#u8, 16#u8,
-    255#u8, 243#u8, 210#u8, 205#u8, 12#u8, 19#u8, 236#u8, 95#u8, 151#u8, 68#u8,
-    23#u8, 196#u8, 167#u8, 126#u8, 61#u8, 100#u8, 93#u8, 25#u8, 115#u8, 96#u8,
-    129#u8, 79#u8, 220#u8, 34#u8, 42#u8, 144#u8, 136#u8, 70#u8, 238#u8, 184#u8,
-    20#u8, 222#u8, 94#u8, 11#u8, 219#u8, 224#u8, 50#u8, 58#u8, 10#u8, 73#u8,
-    6#u8, 36#u8, 92#u8, 194#u8, 211#u8, 172#u8, 98#u8, 145#u8, 149#u8, 228#u8,
-    121#u8, 231#u8, 200#u8, 55#u8, 109#u8, 141#u8, 213#u8, 78#u8, 169#u8,
-    108#u8, 86#u8, 244#u8, 234#u8, 101#u8, 122#u8, 174#u8, 8#u8, 186#u8,
-    120#u8, 37#u8, 46#u8, 28#u8, 166#u8, 180#u8, 198#u8, 232#u8, 221#u8,
-    116#u8, 31#u8, 75#u8, 189#u8, 139#u8, 138#u8, 112#u8, 62#u8, 181#u8,
-    102#u8, 72#u8, 3#u8, 246#u8, 14#u8, 97#u8, 53#u8, 87#u8, 185#u8, 134#u8,
-    193#u8, 29#u8, 158#u8, 225#u8, 248#u8, 152#u8, 17#u8, 105#u8, 217#u8,
-    142#u8, 148#u8, 155#u8, 30#u8, 135#u8, 233#u8, 206#u8, 85#u8, 40#u8,
-    223#u8, 140#u8, 161#u8, 137#u8, 13#u8, 191#u8, 230#u8, 66#u8, 104#u8,
-    65#u8, 153#u8, 45#u8, 15#u8, 176#u8, 84#u8, 187#u8, 22#u8
-    ])
-def algorithms.aes.SBOX : Array U8 256#usize :=
-  eval_global algorithms.aes.SBOX_body
-
-/- [fips_implementations::algorithms::aes::INV_SBOX]
-   Source: 'src/algorithms/aes.rs', lines 51:0-68:2 -/
-def algorithms.aes.INV_SBOX_body : Result (Array U8 256#usize) :=
-  Result.ok
-  (Array.make 256#usize [
-    82#u8, 9#u8, 106#u8, 213#u8, 48#u8, 54#u8, 165#u8, 56#u8, 191#u8, 64#u8,
-    163#u8, 158#u8, 129#u8, 243#u8, 215#u8, 251#u8, 124#u8, 227#u8, 57#u8,
-    130#u8, 155#u8, 47#u8, 255#u8, 135#u8, 52#u8, 142#u8, 67#u8, 68#u8, 196#u8,
-    222#u8, 233#u8, 203#u8, 84#u8, 123#u8, 148#u8, 50#u8, 166#u8, 194#u8,
-    35#u8, 61#u8, 238#u8, 76#u8, 149#u8, 11#u8, 66#u8, 250#u8, 195#u8, 78#u8,
-    8#u8, 46#u8, 161#u8, 102#u8, 40#u8, 217#u8, 36#u8, 178#u8, 118#u8, 91#u8,
-    162#u8, 73#u8, 109#u8, 139#u8, 209#u8, 37#u8, 114#u8, 248#u8, 246#u8,
-    100#u8, 134#u8, 104#u8, 152#u8, 22#u8, 212#u8, 164#u8, 92#u8, 204#u8,
-    93#u8, 101#u8, 182#u8, 146#u8, 108#u8, 112#u8, 72#u8, 80#u8, 253#u8,
-    237#u8, 185#u8, 218#u8, 94#u8, 21#u8, 70#u8, 87#u8, 167#u8, 141#u8, 157#u8,
-    132#u8, 144#u8, 216#u8, 171#u8, 0#u8, 140#u8, 188#u8, 211#u8, 10#u8,
-    247#u8, 228#u8, 88#u8, 5#u8, 184#u8, 179#u8, 69#u8, 6#u8, 208#u8, 44#u8,
-    30#u8, 143#u8, 202#u8, 63#u8, 15#u8, 2#u8, 193#u8, 175#u8, 189#u8, 3#u8,
-    1#u8, 19#u8, 138#u8, 107#u8, 58#u8, 145#u8, 17#u8, 65#u8, 79#u8, 103#u8,
-    220#u8, 234#u8, 151#u8, 242#u8, 207#u8, 206#u8, 240#u8, 180#u8, 230#u8,
-    115#u8, 150#u8, 172#u8, 116#u8, 34#u8, 231#u8, 173#u8, 53#u8, 133#u8,
-    226#u8, 249#u8, 55#u8, 232#u8, 28#u8, 117#u8, 223#u8, 110#u8, 71#u8,
-    241#u8, 26#u8, 113#u8, 29#u8, 41#u8, 197#u8, 137#u8, 111#u8, 183#u8, 98#u8,
-    14#u8, 170#u8, 24#u8, 190#u8, 27#u8, 252#u8, 86#u8, 62#u8, 75#u8, 198#u8,
-    210#u8, 121#u8, 32#u8, 154#u8, 219#u8, 192#u8, 254#u8, 120#u8, 205#u8,
-    90#u8, 244#u8, 31#u8, 221#u8, 168#u8, 51#u8, 136#u8, 7#u8, 199#u8, 49#u8,
-    177#u8, 18#u8, 16#u8, 89#u8, 39#u8, 128#u8, 236#u8, 95#u8, 96#u8, 81#u8,
-    127#u8, 169#u8, 25#u8, 181#u8, 74#u8, 13#u8, 45#u8, 229#u8, 122#u8, 159#u8,
-    147#u8, 201#u8, 156#u8, 239#u8, 160#u8, 224#u8, 59#u8, 77#u8, 174#u8,
-    42#u8, 245#u8, 176#u8, 200#u8, 235#u8, 187#u8, 60#u8, 131#u8, 83#u8,
-    153#u8, 97#u8, 23#u8, 43#u8, 4#u8, 126#u8, 186#u8, 119#u8, 214#u8, 38#u8,
-    225#u8, 105#u8, 20#u8, 99#u8, 85#u8, 33#u8, 12#u8, 125#u8
-    ])
-def algorithms.aes.INV_SBOX : Array U8 256#usize :=
-  eval_global algorithms.aes.INV_SBOX_body
-
-/- [fips_implementations::algorithms::aes::RCON]
-   Source: 'src/algorithms/aes.rs', lines 71:0-71:84 -/
-def algorithms.aes.RCON_body : Result (Array U8 10#usize) :=
-  Result.ok
-  (Array.make 10#usize [
-    1#u8, 2#u8, 4#u8, 8#u8, 16#u8, 32#u8, 64#u8, 128#u8, 27#u8, 54#u8
-    ])
-def algorithms.aes.RCON : Array U8 10#usize :=
-  eval_global algorithms.aes.RCON_body
-
-/- [fips_implementations::algorithms::aes::rot_word]:
-   Source: 'src/algorithms/aes.rs', lines 74:0-76:1 -/
-def algorithms.aes.rot_word
-  (word : Array U8 4#usize) : Result (Array U8 4#usize) :=
-  do
-  let i ← Array.index_usize word 1#usize
-  let i1 ← Array.index_usize word 2#usize
-  let i2 ← Array.index_usize word 3#usize
-  let i3 ← Array.index_usize word 0#usize
-  Result.ok (Array.make 4#usize [ i, i1, i2, i3 ])
-
-/- [fips_implementations::algorithms::aes::sub_word]:
-   Source: 'src/algorithms/aes.rs', lines 79:0-86:1 -/
-def algorithms.aes.sub_word
-  (word : Array U8 4#usize) : Result (Array U8 4#usize) :=
-  do
-  let i ← Array.index_usize word 0#usize
-  let i1 ← Scalar.cast .Usize i
-  let i2 ← Array.index_usize algorithms.aes.SBOX i1
-  let i3 ← Array.index_usize word 1#usize
-  let i4 ← Scalar.cast .Usize i3
-  let i5 ← Array.index_usize algorithms.aes.SBOX i4
-  let i6 ← Array.index_usize word 2#usize
-  let i7 ← Scalar.cast .Usize i6
-  let i8 ← Array.index_usize algorithms.aes.SBOX i7
-  let i9 ← Array.index_usize word 3#usize
-  let i10 ← Scalar.cast .Usize i9
-  let i11 ← Array.index_usize algorithms.aes.SBOX i10
-  Result.ok (Array.make 4#usize [ i2, i5, i8, i11 ])
-
-/- [fips_implementations::algorithms::aes::copy_initial_key]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 91:4-94:5 -/
-divergent def algorithms.aes.copy_initial_key_loop
-  (w : alloc.vec.Vec U8) (key : Slice U8) (nk : Usize) (i : Usize) :
-  Result (alloc.vec.Vec U8)
-  :=
-  if i < nk
-  then
-    do
-    let i1 ← i * 4#usize
-    let i2 ← i + 1#usize
-    let i3 ← i2 * 4#usize
-    let s ←
-      core.slice.index.Slice.index
-        (core.slice.index.SliceIndexRangeUsizeSliceTInst U8) key
-        { start := i1, end_ := i3 }
-    let w1 ← alloc.vec.Vec.extend_from_slice core.clone.CloneU8 w s
-    let i4 ← i + 1#usize
-    algorithms.aes.copy_initial_key_loop w1 key nk i4
-  else Result.ok w
-
-/- [fips_implementations::algorithms::aes::copy_initial_key]:
-   Source: 'src/algorithms/aes.rs', lines 89:0-95:1 -/
-def algorithms.aes.copy_initial_key
-  (w : alloc.vec.Vec U8) (key : Slice U8) (nk : Usize) :
-  Result (alloc.vec.Vec U8)
-  :=
-  algorithms.aes.copy_initial_key_loop w key nk 0#usize
-
-/- [fips_implementations::algorithms::aes::expand_key_schedule]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 100:4-123:5 -/
-divergent def algorithms.aes.expand_key_schedule_loop
-  (w : alloc.vec.Vec U8) (nk : Usize) (total_words : Usize) (nk1 : Usize) :
-  Result (alloc.vec.Vec U8)
-  :=
-  if nk1 < total_words
-  then
-    do
-    let i ← nk1 - 1#usize
-    let i1 ← i * 4#usize
-    let i2 ←
-      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w i1
-    let i3 ← nk1 - 1#usize
-    let i4 ← i3 * 4#usize
-    let i5 ← i4 + 1#usize
-    let i6 ←
-      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w i5
-    let i7 ← nk1 - 1#usize
-    let i8 ← i7 * 4#usize
-    let i9 ← i8 + 2#usize
-    let i10 ←
-      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w i9
-    let i11 ← nk1 - 1#usize
-    let i12 ← i11 * 4#usize
-    let i13 ← i12 + 3#usize
-    let i14 ←
-      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w i13
-    let i15 ← nk1 % nk
-    if i15 = 0#usize
-    then
-      do
-      let a ←
-        algorithms.aes.rot_word (Array.make 4#usize [ i2, i6, i10, i14 ])
-      let temp ← algorithms.aes.sub_word a
-      let i16 ← nk1 / nk
-      let i17 ← i16 - 1#usize
-      let i18 ← Array.index_usize algorithms.aes.RCON i17
-      let i19 ← Array.index_usize temp 0#usize
-      let (_, index_mut_back) ← Array.index_mut_usize temp 0#usize
-      let i20 ← nk1 - nk
-      let i21 ← i20 * 4#usize
-      let i22 ←
-        alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-          i21
-      let i23 ← nk1 - nk
-      let i24 ← i23 * 4#usize
-      let i25 ← i24 + 1#usize
-      let i26 ←
-        alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-          i25
-      let i27 ← nk1 - nk
-      let i28 ← i27 * 4#usize
-      let i29 ← i28 + 2#usize
-      let i30 ←
-        alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-          i29
-      let i31 ← nk1 - nk
-      let i32 ← i31 * 4#usize
-      let i33 ← i32 + 3#usize
-      let i34 ←
-        alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-          i33
-      let temp1 := index_mut_back (i19 ^^^ i18)
-      let i35 ← Array.index_usize temp1 0#usize
-      let i36 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 0#usize
-      let w1 ← alloc.vec.Vec.push w (i35 ^^^ i36)
-      let i37 ← Array.index_usize temp1 1#usize
-      let i38 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 1#usize
-      let w2 ← alloc.vec.Vec.push w1 (i37 ^^^ i38)
-      let i39 ← Array.index_usize temp1 2#usize
-      let i40 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 2#usize
-      let w3 ← alloc.vec.Vec.push w2 (i39 ^^^ i40)
-      let i41 ← Array.index_usize temp1 3#usize
-      let i42 ←
-        Array.index_usize (Array.make 4#usize [ i22, i26, i30, i34 ]) 3#usize
-      let w4 ← alloc.vec.Vec.push w3 (i41 ^^^ i42)
-      let i43 ← nk1 + 1#usize
-      algorithms.aes.expand_key_schedule_loop w4 nk total_words i43
-    else
-      if nk > 6#usize
-      then
-        do
-        let i16 ← nk1 % nk
-        if i16 = 4#usize
-        then
-          do
-          let temp ←
-            algorithms.aes.sub_word (Array.make 4#usize [ i2, i6, i10, i14 ])
-          let i17 ← nk1 - nk
-          let i18 ← i17 * 4#usize
-          let i19 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i18
-          let i20 ← nk1 - nk
-          let i21 ← i20 * 4#usize
-          let i22 ← i21 + 1#usize
-          let i23 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i22
-          let i24 ← nk1 - nk
-          let i25 ← i24 * 4#usize
-          let i26 ← i25 + 2#usize
-          let i27 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i26
-          let i28 ← nk1 - nk
-          let i29 ← i28 * 4#usize
-          let i30 ← i29 + 3#usize
-          let i31 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i30
-          let i32 ← Array.index_usize temp 0#usize
-          let i33 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              0#usize
-          let w1 ← alloc.vec.Vec.push w (i32 ^^^ i33)
-          let i34 ← Array.index_usize temp 1#usize
-          let i35 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              1#usize
-          let w2 ← alloc.vec.Vec.push w1 (i34 ^^^ i35)
-          let i36 ← Array.index_usize temp 2#usize
-          let i37 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              2#usize
-          let w3 ← alloc.vec.Vec.push w2 (i36 ^^^ i37)
-          let i38 ← Array.index_usize temp 3#usize
-          let i39 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              3#usize
-          let w4 ← alloc.vec.Vec.push w3 (i38 ^^^ i39)
-          let i40 ← nk1 + 1#usize
-          algorithms.aes.expand_key_schedule_loop w4 nk total_words i40
-        else
-          do
-          let i17 ← nk1 - nk
-          let i18 ← i17 * 4#usize
-          let i19 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i18
-          let i20 ← nk1 - nk
-          let i21 ← i20 * 4#usize
-          let i22 ← i21 + 1#usize
-          let i23 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i22
-          let i24 ← nk1 - nk
-          let i25 ← i24 * 4#usize
-          let i26 ← i25 + 2#usize
-          let i27 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i26
-          let i28 ← nk1 - nk
-          let i29 ← i28 * 4#usize
-          let i30 ← i29 + 3#usize
-          let i31 ←
-            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8)
-              w i30
-          let i32 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 0#usize
-          let i33 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              0#usize
-          let w1 ← alloc.vec.Vec.push w (i32 ^^^ i33)
-          let i34 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 1#usize
-          let i35 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              1#usize
-          let w2 ← alloc.vec.Vec.push w1 (i34 ^^^ i35)
-          let i36 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 2#usize
-          let i37 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              2#usize
-          let w3 ← alloc.vec.Vec.push w2 (i36 ^^^ i37)
-          let i38 ←
-            Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 3#usize
-          let i39 ←
-            Array.index_usize (Array.make 4#usize [ i19, i23, i27, i31 ])
-              3#usize
-          let w4 ← alloc.vec.Vec.push w3 (i38 ^^^ i39)
-          let i40 ← nk1 + 1#usize
-          algorithms.aes.expand_key_schedule_loop w4 nk total_words i40
-      else
-        do
-        let i16 ← nk1 - nk
-        let i17 ← i16 * 4#usize
-        let i18 ←
-          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-            i17
-        let i19 ← nk1 - nk
-        let i20 ← i19 * 4#usize
-        let i21 ← i20 + 1#usize
-        let i22 ←
-          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-            i21
-        let i23 ← nk1 - nk
-        let i24 ← i23 * 4#usize
-        let i25 ← i24 + 2#usize
-        let i26 ←
-          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-            i25
-        let i27 ← nk1 - nk
-        let i28 ← i27 * 4#usize
-        let i29 ← i28 + 3#usize
-        let i30 ←
-          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U8) w
-            i29
-        let i31 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 0#usize
-        let i32 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 0#usize
-        let w1 ← alloc.vec.Vec.push w (i31 ^^^ i32)
-        let i33 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 1#usize
-        let i34 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 1#usize
-        let w2 ← alloc.vec.Vec.push w1 (i33 ^^^ i34)
-        let i35 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 2#usize
-        let i36 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 2#usize
-        let w3 ← alloc.vec.Vec.push w2 (i35 ^^^ i36)
-        let i37 ←
-          Array.index_usize (Array.make 4#usize [ i2, i6, i10, i14 ]) 3#usize
-        let i38 ←
-          Array.index_usize (Array.make 4#usize [ i18, i22, i26, i30 ]) 3#usize
-        let w4 ← alloc.vec.Vec.push w3 (i37 ^^^ i38)
-        let i39 ← nk1 + 1#usize
-        algorithms.aes.expand_key_schedule_loop w4 nk total_words i39
-  else Result.ok w
-
-/- [fips_implementations::algorithms::aes::expand_key_schedule]:
-   Source: 'src/algorithms/aes.rs', lines 98:0-124:1 -/
-def algorithms.aes.expand_key_schedule
-  (w : alloc.vec.Vec U8) (nk : Usize) (total_words : Usize) :
-  Result (alloc.vec.Vec U8)
-  :=
-  algorithms.aes.expand_key_schedule_loop w nk total_words nk
-
-/- [fips_implementations::algorithms::aes::key_expansion]:
-   Source: 'src/algorithms/aes.rs', lines 127:0-139:1 -/
-def algorithms.aes.key_expansion
-  (key : Slice U8) (nk : Usize) (nr : Usize) : Result (alloc.vec.Vec U8) :=
-  do
-  let i ← nr + 1#usize
-  let total_words ← 4#usize * i
-  let i1 ← total_words * 4#usize
-  let w := alloc.vec.Vec.with_capacity U8 i1
-  let w1 ← algorithms.aes.copy_initial_key w key nk
-  algorithms.aes.expand_key_schedule w1 nk total_words
-
-/- [fips_implementations::algorithms::aes::sub_byte]:
-   Source: 'src/algorithms/aes.rs', lines 142:0-144:1 -/
-def algorithms.aes.sub_byte (byte : U8) : Result U8 :=
-  do
-  let i ← Scalar.cast .Usize byte
-  Array.index_usize algorithms.aes.SBOX i
-
-/- [fips_implementations::algorithms::aes::sub_bytes]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 149:4-152:5 -/
-divergent def algorithms.aes.sub_bytes_loop
-  (state : Slice U8) (i : Usize) : Result (Slice U8) :=
-  let i1 := Slice.len state
-  if i < i1
-  then
-    do
-    let i2 ← Slice.index_usize state i
-    let i3 ← algorithms.aes.sub_byte i2
-    let (_, index_mut_back) ← Slice.index_mut_usize state i
-    let i4 ← i + 1#usize
-    let state1 := index_mut_back i3
-    algorithms.aes.sub_bytes_loop state1 i4
-  else Result.ok state
-
-/- [fips_implementations::algorithms::aes::sub_bytes]:
-   Source: 'src/algorithms/aes.rs', lines 147:0-153:1 -/
-def algorithms.aes.sub_bytes (state : Slice U8) : Result (Slice U8) :=
-  algorithms.aes.sub_bytes_loop state 0#usize
-
-/- [fips_implementations::algorithms::aes::inv_sub_byte]:
-   Source: 'src/algorithms/aes.rs', lines 156:0-158:1 -/
-def algorithms.aes.inv_sub_byte (byte : U8) : Result U8 :=
-  do
-  let i ← Scalar.cast .Usize byte
-  Array.index_usize algorithms.aes.INV_SBOX i
-
-/- [fips_implementations::algorithms::aes::inv_sub_bytes]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 163:4-166:5 -/
-divergent def algorithms.aes.inv_sub_bytes_loop
-  (state : Slice U8) (i : Usize) : Result (Slice U8) :=
-  let i1 := Slice.len state
-  if i < i1
-  then
-    do
-    let i2 ← Slice.index_usize state i
-    let i3 ← algorithms.aes.inv_sub_byte i2
-    let (_, index_mut_back) ← Slice.index_mut_usize state i
-    let i4 ← i + 1#usize
-    let state1 := index_mut_back i3
-    algorithms.aes.inv_sub_bytes_loop state1 i4
-  else Result.ok state
-
-/- [fips_implementations::algorithms::aes::inv_sub_bytes]:
-   Source: 'src/algorithms/aes.rs', lines 161:0-167:1 -/
-def algorithms.aes.inv_sub_bytes (state : Slice U8) : Result (Slice U8) :=
-  algorithms.aes.inv_sub_bytes_loop state 0#usize
-
-/- [fips_implementations::algorithms::aes::shift_rows]:
-   Source: 'src/algorithms/aes.rs', lines 170:0-177:1 -/
-def algorithms.aes.shift_rows
-  (state : Array U8 16#usize) : Result (Array U8 16#usize) :=
-  do
-  let i ← Array.index_usize state 0#usize
-  let i1 ← Array.index_usize state 5#usize
-  let i2 ← Array.index_usize state 10#usize
-  let i3 ← Array.index_usize state 15#usize
-  let i4 ← Array.index_usize state 4#usize
-  let i5 ← Array.index_usize state 9#usize
-  let i6 ← Array.index_usize state 14#usize
-  let i7 ← Array.index_usize state 3#usize
-  let i8 ← Array.index_usize state 8#usize
-  let i9 ← Array.index_usize state 13#usize
-  let i10 ← Array.index_usize state 2#usize
-  let i11 ← Array.index_usize state 7#usize
-  let i12 ← Array.index_usize state 12#usize
-  let i13 ← Array.index_usize state 1#usize
-  let i14 ← Array.index_usize state 6#usize
-  let i15 ← Array.index_usize state 11#usize
-  Result.ok
-    (Array.make 16#usize [
-      i, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-      ])
-
-/- [fips_implementations::algorithms::aes::inv_shift_rows]:
-   Source: 'src/algorithms/aes.rs', lines 180:0-187:1 -/
-def algorithms.aes.inv_shift_rows
-  (state : Array U8 16#usize) : Result (Array U8 16#usize) :=
-  do
-  let i ← Array.index_usize state 0#usize
-  let i1 ← Array.index_usize state 13#usize
-  let i2 ← Array.index_usize state 10#usize
-  let i3 ← Array.index_usize state 7#usize
-  let i4 ← Array.index_usize state 4#usize
-  let i5 ← Array.index_usize state 1#usize
-  let i6 ← Array.index_usize state 14#usize
-  let i7 ← Array.index_usize state 11#usize
-  let i8 ← Array.index_usize state 8#usize
-  let i9 ← Array.index_usize state 5#usize
-  let i10 ← Array.index_usize state 2#usize
-  let i11 ← Array.index_usize state 15#usize
-  let i12 ← Array.index_usize state 12#usize
-  let i13 ← Array.index_usize state 9#usize
-  let i14 ← Array.index_usize state 6#usize
-  let i15 ← Array.index_usize state 3#usize
-  Result.ok
-    (Array.make 16#usize [
-      i, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15
-      ])
-
-/- [fips_implementations::algorithms::aes::mix_column]:
-   Source: 'src/algorithms/aes.rs', lines 190:0-197:1 -/
-def algorithms.aes.mix_column
-  (col : Array U8 4#usize) : Result (Array U8 4#usize) :=
-  do
-  let i ← Array.index_usize col 0#usize
-  let i1 ← algorithms.aes.gf_mul 2#u8 i
-  let i2 ← Array.index_usize col 1#usize
-  let i3 ← algorithms.aes.gf_mul 3#u8 i2
-  let i4 ← Array.index_usize col 2#usize
-  let i5 ← algorithms.aes.gf_mul 1#u8 i4
-  let i6 ← Array.index_usize col 3#usize
-  let i7 ← algorithms.aes.gf_mul 1#u8 i6
-  let i8 ← Array.index_usize col 0#usize
-  let i9 ← algorithms.aes.gf_mul 1#u8 i8
-  let i10 ← Array.index_usize col 1#usize
-  let i11 ← algorithms.aes.gf_mul 2#u8 i10
-  let i12 ← Array.index_usize col 2#usize
-  let i13 ← algorithms.aes.gf_mul 3#u8 i12
-  let i14 ← Array.index_usize col 3#usize
-  let i15 ← algorithms.aes.gf_mul 1#u8 i14
-  let i16 ← Array.index_usize col 0#usize
-  let i17 ← algorithms.aes.gf_mul 1#u8 i16
-  let i18 ← Array.index_usize col 1#usize
-  let i19 ← algorithms.aes.gf_mul 1#u8 i18
-  let i20 ← Array.index_usize col 2#usize
-  let i21 ← algorithms.aes.gf_mul 2#u8 i20
-  let i22 ← Array.index_usize col 3#usize
-  let i23 ← algorithms.aes.gf_mul 3#u8 i22
-  let i24 ← Array.index_usize col 0#usize
-  let i25 ← algorithms.aes.gf_mul 3#u8 i24
-  let i26 ← Array.index_usize col 1#usize
-  let i27 ← algorithms.aes.gf_mul 1#u8 i26
-  let i28 ← Array.index_usize col 2#usize
-  let i29 ← algorithms.aes.gf_mul 1#u8 i28
-  let i30 ← Array.index_usize col 3#usize
-  let i31 ← algorithms.aes.gf_mul 2#u8 i30
-  Result.ok
-    (Array.make 4#usize [
-      ((i1 ^^^ i3) ^^^ i5) ^^^ i7, ((i9 ^^^ i11) ^^^ i13) ^^^ i15, ((i17 ^^^
-      i19) ^^^ i21) ^^^ i23, ((i25 ^^^ i27) ^^^ i29) ^^^ i31
-      ])
-
-/- [fips_implementations::algorithms::aes::inv_mix_column]:
-   Source: 'src/algorithms/aes.rs', lines 200:0-207:1 -/
-def algorithms.aes.inv_mix_column
-  (col : Array U8 4#usize) : Result (Array U8 4#usize) :=
-  do
-  let i ← Array.index_usize col 0#usize
-  let i1 ← algorithms.aes.gf_mul 14#u8 i
-  let i2 ← Array.index_usize col 1#usize
-  let i3 ← algorithms.aes.gf_mul 11#u8 i2
-  let i4 ← Array.index_usize col 2#usize
-  let i5 ← algorithms.aes.gf_mul 13#u8 i4
-  let i6 ← Array.index_usize col 3#usize
-  let i7 ← algorithms.aes.gf_mul 9#u8 i6
-  let i8 ← Array.index_usize col 0#usize
-  let i9 ← algorithms.aes.gf_mul 9#u8 i8
-  let i10 ← Array.index_usize col 1#usize
-  let i11 ← algorithms.aes.gf_mul 14#u8 i10
-  let i12 ← Array.index_usize col 2#usize
-  let i13 ← algorithms.aes.gf_mul 11#u8 i12
-  let i14 ← Array.index_usize col 3#usize
-  let i15 ← algorithms.aes.gf_mul 13#u8 i14
-  let i16 ← Array.index_usize col 0#usize
-  let i17 ← algorithms.aes.gf_mul 13#u8 i16
-  let i18 ← Array.index_usize col 1#usize
-  let i19 ← algorithms.aes.gf_mul 9#u8 i18
-  let i20 ← Array.index_usize col 2#usize
-  let i21 ← algorithms.aes.gf_mul 14#u8 i20
-  let i22 ← Array.index_usize col 3#usize
-  let i23 ← algorithms.aes.gf_mul 11#u8 i22
-  let i24 ← Array.index_usize col 0#usize
-  let i25 ← algorithms.aes.gf_mul 11#u8 i24
-  let i26 ← Array.index_usize col 1#usize
-  let i27 ← algorithms.aes.gf_mul 13#u8 i26
-  let i28 ← Array.index_usize col 2#usize
-  let i29 ← algorithms.aes.gf_mul 9#u8 i28
-  let i30 ← Array.index_usize col 3#usize
-  let i31 ← algorithms.aes.gf_mul 14#u8 i30
-  Result.ok
-    (Array.make 4#usize [
-      ((i1 ^^^ i3) ^^^ i5) ^^^ i7, ((i9 ^^^ i11) ^^^ i13) ^^^ i15, ((i17 ^^^
-      i19) ^^^ i21) ^^^ i23, ((i25 ^^^ i27) ^^^ i29) ^^^ i31
-      ])
-
-/- [fips_implementations::algorithms::aes::mix_columns]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 213:4-226:5 -/
-divergent def algorithms.aes.mix_columns_loop
-  (state : Array U8 16#usize) (result : Array U8 16#usize) (i : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  if i < 4#usize
-  then
-    do
-    let i1 ← 4#usize * i
-    let i2 ← Array.index_usize state i1
-    let i3 ← 4#usize * i
-    let i4 ← i3 + 1#usize
-    let i5 ← Array.index_usize state i4
-    let i6 ← 4#usize * i
-    let i7 ← i6 + 2#usize
-    let i8 ← Array.index_usize state i7
-    let i9 ← 4#usize * i
-    let i10 ← i9 + 3#usize
-    let i11 ← Array.index_usize state i10
-    let mixed ←
-      algorithms.aes.mix_column (Array.make 4#usize [ i2, i5, i8, i11 ])
-    let i12 ← Array.index_usize mixed 0#usize
-    let i13 ← 4#usize * i
-    let (_, index_mut_back) ← Array.index_mut_usize result i13
-    let i14 ← Array.index_usize mixed 1#usize
-    let i15 ← 4#usize * i
-    let i16 ← i15 + 1#usize
-    let result1 := index_mut_back i12
-    let (_, index_mut_back1) ← Array.index_mut_usize result1 i16
-    let i17 ← Array.index_usize mixed 2#usize
-    let i18 ← 4#usize * i
-    let i19 ← i18 + 2#usize
-    let result2 := index_mut_back1 i14
-    let (_, index_mut_back2) ← Array.index_mut_usize result2 i19
-    let i20 ← Array.index_usize mixed 3#usize
-    let i21 ← 4#usize * i
-    let i22 ← i21 + 3#usize
-    let result3 := index_mut_back2 i17
-    let (_, index_mut_back3) ← Array.index_mut_usize result3 i22
-    let i23 ← i + 1#usize
-    let result4 := index_mut_back3 i20
-    algorithms.aes.mix_columns_loop state result4 i23
-  else Result.ok result
-
-/- [fips_implementations::algorithms::aes::mix_columns]:
-   Source: 'src/algorithms/aes.rs', lines 210:0-228:1 -/
-def algorithms.aes.mix_columns
-  (state : Array U8 16#usize) : Result (Array U8 16#usize) :=
-  let result := Array.repeat 16#usize 0#u8
-  algorithms.aes.mix_columns_loop state result 0#usize
-
-/- [fips_implementations::algorithms::aes::inv_mix_columns]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 234:4-247:5 -/
-divergent def algorithms.aes.inv_mix_columns_loop
-  (state : Array U8 16#usize) (result : Array U8 16#usize) (i : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  if i < 4#usize
-  then
-    do
-    let i1 ← 4#usize * i
-    let i2 ← Array.index_usize state i1
-    let i3 ← 4#usize * i
-    let i4 ← i3 + 1#usize
-    let i5 ← Array.index_usize state i4
-    let i6 ← 4#usize * i
-    let i7 ← i6 + 2#usize
-    let i8 ← Array.index_usize state i7
-    let i9 ← 4#usize * i
-    let i10 ← i9 + 3#usize
-    let i11 ← Array.index_usize state i10
-    let mixed ←
-      algorithms.aes.inv_mix_column (Array.make 4#usize [ i2, i5, i8, i11 ])
-    let i12 ← Array.index_usize mixed 0#usize
-    let i13 ← 4#usize * i
-    let (_, index_mut_back) ← Array.index_mut_usize result i13
-    let i14 ← Array.index_usize mixed 1#usize
-    let i15 ← 4#usize * i
-    let i16 ← i15 + 1#usize
-    let result1 := index_mut_back i12
-    let (_, index_mut_back1) ← Array.index_mut_usize result1 i16
-    let i17 ← Array.index_usize mixed 2#usize
-    let i18 ← 4#usize * i
-    let i19 ← i18 + 2#usize
-    let result2 := index_mut_back1 i14
-    let (_, index_mut_back2) ← Array.index_mut_usize result2 i19
-    let i20 ← Array.index_usize mixed 3#usize
-    let i21 ← 4#usize * i
-    let i22 ← i21 + 3#usize
-    let result3 := index_mut_back2 i17
-    let (_, index_mut_back3) ← Array.index_mut_usize result3 i22
-    let i23 ← i + 1#usize
-    let result4 := index_mut_back3 i20
-    algorithms.aes.inv_mix_columns_loop state result4 i23
-  else Result.ok result
-
-/- [fips_implementations::algorithms::aes::inv_mix_columns]:
-   Source: 'src/algorithms/aes.rs', lines 231:0-249:1 -/
-def algorithms.aes.inv_mix_columns
-  (state : Array U8 16#usize) : Result (Array U8 16#usize) :=
-  let result := Array.repeat 16#usize 0#u8
-  algorithms.aes.inv_mix_columns_loop state result 0#usize
-
-/- [fips_implementations::algorithms::aes::add_round_key]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 255:4-258:5 -/
-divergent def algorithms.aes.add_round_key_loop
-  (state : Array U8 16#usize) (round_key : Array U8 16#usize)
-  (result : Array U8 16#usize) (i : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  if i < 16#usize
-  then
-    do
-    let i1 ← Array.index_usize state i
-    let i2 ← Array.index_usize round_key i
-    let (_, index_mut_back) ← Array.index_mut_usize result i
-    let i3 ← i + 1#usize
-    let result1 := index_mut_back (i1 ^^^ i2)
-    algorithms.aes.add_round_key_loop state round_key result1 i3
-  else Result.ok result
-
-/- [fips_implementations::algorithms::aes::add_round_key]:
-   Source: 'src/algorithms/aes.rs', lines 252:0-260:1 -/
-def algorithms.aes.add_round_key
-  (state : Array U8 16#usize) (round_key : Array U8 16#usize) :
-  Result (Array U8 16#usize)
-  :=
-  let result := Array.repeat 16#usize 0#u8
-  algorithms.aes.add_round_key_loop state round_key result 0#usize
-
-/- [fips_implementations::algorithms::aes::extract_array_16]:
-   Source: 'src/algorithms/aes.rs', lines 266:0-273:1 -/
-def algorithms.aes.extract_array_16
-  (arr : Slice U8) (i : Usize) : Result (Array U8 16#usize) :=
-  do
-  let i1 ← i + 0#usize
-  let i2 ← Slice.index_usize arr i1
-  let i3 ← i + 1#usize
-  let i4 ← Slice.index_usize arr i3
-  let i5 ← i + 2#usize
-  let i6 ← Slice.index_usize arr i5
-  let i7 ← i + 3#usize
-  let i8 ← Slice.index_usize arr i7
-  let i9 ← i + 4#usize
-  let i10 ← Slice.index_usize arr i9
-  let i11 ← i + 5#usize
-  let i12 ← Slice.index_usize arr i11
-  let i13 ← i + 6#usize
-  let i14 ← Slice.index_usize arr i13
-  let i15 ← i + 7#usize
-  let i16 ← Slice.index_usize arr i15
-  let i17 ← i + 8#usize
-  let i18 ← Slice.index_usize arr i17
-  let i19 ← i + 9#usize
-  let i20 ← Slice.index_usize arr i19
-  let i21 ← i + 10#usize
-  let i22 ← Slice.index_usize arr i21
-  let i23 ← i + 11#usize
-  let i24 ← Slice.index_usize arr i23
-  let i25 ← i + 12#usize
-  let i26 ← Slice.index_usize arr i25
-  let i27 ← i + 13#usize
-  let i28 ← Slice.index_usize arr i27
-  let i29 ← i + 14#usize
-  let i30 ← Slice.index_usize arr i29
-  let i31 ← i + 15#usize
-  let i32 ← Slice.index_usize arr i31
-  Result.ok
-    (Array.make 16#usize [
-      i2, i4, i6, i8, i10, i12, i14, i16, i18, i20, i22, i24, i26, i28, i30,
-      i32
-      ])
-
-/- [fips_implementations::algorithms::aes::cipher]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 282:4-288:5 -/
-divergent def algorithms.aes.cipher_loop
-  (key_schedule : Slice U8) (nr : Usize) (state : Array U8 16#usize)
-  (round : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  if round < nr
-  then
-    do
-    let (s, to_slice_mut_back) ← Array.to_slice_mut state
-    let s1 ← algorithms.aes.sub_bytes s
-    let state1 := to_slice_mut_back s1
-    let state2 ← algorithms.aes.shift_rows state1
-    let state3 ← algorithms.aes.mix_columns state2
-    let i ← round * 16#usize
-    let a ← algorithms.aes.extract_array_16 key_schedule i
-    let state4 ← algorithms.aes.add_round_key state3 a
-    let round1 ← round + 1#usize
-    algorithms.aes.cipher_loop key_schedule nr state4 round1
-  else
-    do
-    let (s, to_slice_mut_back) ← Array.to_slice_mut state
-    let s1 ← algorithms.aes.sub_bytes s
-    let state1 := to_slice_mut_back s1
-    let state2 ← algorithms.aes.shift_rows state1
-    let i ← nr * 16#usize
-    let a ← algorithms.aes.extract_array_16 key_schedule i
-    algorithms.aes.add_round_key state2 a
-
-/- [fips_implementations::algorithms::aes::cipher]:
-   Source: 'src/algorithms/aes.rs', lines 276:0-295:1 -/
-def algorithms.aes.cipher
-  (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let a ← algorithms.aes.extract_array_16 key_schedule 0#usize
-  let state ← algorithms.aes.add_round_key input a
-  algorithms.aes.cipher_loop key_schedule nr state 1#usize
-
-/- [fips_implementations::algorithms::aes::inv_cipher]: loop 0:
-   Source: 'src/algorithms/aes.rs', lines 304:4-311:5 -/
-divergent def algorithms.aes.inv_cipher_loop
-  (key_schedule : Slice U8) (nr : Usize) (state : Array U8 16#usize)
-  (round_idx : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  if round_idx < nr
-  then
-    do
-    let round ← nr - round_idx
-    let state1 ← algorithms.aes.inv_shift_rows state
-    let (s, to_slice_mut_back) ← Array.to_slice_mut state1
-    let s1 ← algorithms.aes.inv_sub_bytes s
-    let state2 := to_slice_mut_back s1
-    let i ← round * 16#usize
-    let a ← algorithms.aes.extract_array_16 key_schedule i
-    let state3 ← algorithms.aes.add_round_key state2 a
-    let state4 ← algorithms.aes.inv_mix_columns state3
-    let round_idx1 ← round_idx + 1#usize
-    algorithms.aes.inv_cipher_loop key_schedule nr state4 round_idx1
-  else
-    do
-    let state1 ← algorithms.aes.inv_shift_rows state
-    let (s, to_slice_mut_back) ← Array.to_slice_mut state1
-    let s1 ← algorithms.aes.inv_sub_bytes s
-    let state2 := to_slice_mut_back s1
-    let a ← algorithms.aes.extract_array_16 key_schedule 0#usize
-    algorithms.aes.add_round_key state2 a
-
-/- [fips_implementations::algorithms::aes::inv_cipher]:
-   Source: 'src/algorithms/aes.rs', lines 298:0-318:1 -/
-def algorithms.aes.inv_cipher
-  (input : Array U8 16#usize) (key_schedule : Slice U8) (nr : Usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let i ← nr * 16#usize
-  let a ← algorithms.aes.extract_array_16 key_schedule i
-  let state ← algorithms.aes.add_round_key input a
-  algorithms.aes.inv_cipher_loop key_schedule nr state 1#usize
-
-/- [fips_implementations::algorithms::aes::aes128]:
-   Source: 'src/algorithms/aes.rs', lines 321:0-326:1 -/
-def algorithms.aes.aes128
-  (input : Array U8 16#usize) (key : Array U8 16#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.cipher input s1 10#usize
-
-/- [fips_implementations::algorithms::aes::aes192]:
-   Source: 'src/algorithms/aes.rs', lines 329:0-334:1 -/
-def algorithms.aes.aes192
-  (input : Array U8 16#usize) (key : Array U8 24#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.cipher input s1 12#usize
-
-/- [fips_implementations::algorithms::aes::aes256]:
-   Source: 'src/algorithms/aes.rs', lines 337:0-342:1 -/
-def algorithms.aes.aes256
-  (input : Array U8 16#usize) (key : Array U8 32#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.cipher input s1 14#usize
-
-/- [fips_implementations::algorithms::aes::aes128_inv]:
-   Source: 'src/algorithms/aes.rs', lines 345:0-350:1 -/
-def algorithms.aes.aes128_inv
-  (input : Array U8 16#usize) (key : Array U8 16#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 4#usize 10#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.inv_cipher input s1 10#usize
-
-/- [fips_implementations::algorithms::aes::aes192_inv]:
-   Source: 'src/algorithms/aes.rs', lines 353:0-358:1 -/
-def algorithms.aes.aes192_inv
-  (input : Array U8 16#usize) (key : Array U8 24#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 6#usize 12#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.inv_cipher input s1 12#usize
-
-/- [fips_implementations::algorithms::aes::aes256_inv]:
-   Source: 'src/algorithms/aes.rs', lines 361:0-366:1 -/
-def algorithms.aes.aes256_inv
-  (input : Array U8 16#usize) (key : Array U8 32#usize) :
-  Result (Array U8 16#usize)
-  :=
-  do
-  let s ← Array.to_slice key
-  let key_schedule ← algorithms.aes.key_expansion s 8#usize 14#usize
-  let s1 := alloc.vec.DerefVec.deref key_schedule
-  algorithms.aes.inv_cipher input s1 14#usize
-
 /- [fips_implementations::algorithms::sha1::u32x4]
    Source: 'src/algorithms/sha1.rs', lines 9:0-9:53 -/
 def algorithms.sha1.u32x4 := U32 × U32 × U32 × U32
@@ -1529,12 +564,11 @@ def algorithms.sha1.sha1_digest_round_x4
     algorithms.sha1.sha1rnds4p abcd ux
   | _ => Result.ok (0#u32, 0#u32, 0#u32, 0#u32)
 
-/- [fips_implementations::algorithms::sha1::process]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 306:4-313:5 -/
-divergent def algorithms.sha1.process_loop
-  (state : Array U32 5#usize) (block : Array U8 64#usize)
-  (words : Array U32 16#usize) (index : Usize) :
-  Result Unit
+/- [fips_implementations::algorithms::sha1::process_loop]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 307:4-314:5 -/
+divergent def algorithms.sha1.process_loop_loop
+  (block : Array U8 64#usize) (words : Array U32 16#usize) (index : Usize) :
+  Result (Array U32 16#usize)
   :=
   if index < 16#usize
   then
@@ -1557,184 +591,521 @@ divergent def algorithms.sha1.process_loop
     let (_, index_mut_back) ← Array.index_mut_usize words index
     let index1 ← index + 1#usize
     let words1 := index_mut_back (((i2 ||| i6) ||| i10) ||| i13)
-    algorithms.sha1.process_loop state block words1 index1
-  else
-    do
-    let i ← Array.index_usize state 0#usize
-    let i1 ← Array.index_usize state 1#usize
-    let i2 ← Array.index_usize state 2#usize
-    let i3 ← Array.index_usize state 3#usize
-    let i4 ← Array.index_usize words 0#usize
-    let i5 ← Array.index_usize words 1#usize
-    let i6 ← Array.index_usize words 2#usize
-    let i7 ← Array.index_usize words 3#usize
-    let i8 ← Array.index_usize state 4#usize
-    let ux ← algorithms.sha1.sha1_first_add i8 (i4, i5, i6, i7)
-    let h1 ← algorithms.sha1.sha1_digest_round_x4 (i, i1, i2, i3) ux 0#i8
-    let i9 ← Array.index_usize words 4#usize
-    let i10 ← Array.index_usize words 5#usize
-    let i11 ← Array.index_usize words 6#usize
-    let i12 ← Array.index_usize words 7#usize
-    let ux1 ←
-      algorithms.sha1.sha1_first_half (i, i1, i2, i3) (i9, i10, i11, i12)
-    let h0 ← algorithms.sha1.sha1_digest_round_x4 h1 ux1 0#i8
-    let i13 ← Array.index_usize words 8#usize
-    let i14 ← Array.index_usize words 9#usize
-    let i15 ← Array.index_usize words 10#usize
-    let i16 ← Array.index_usize words 11#usize
-    let ux2 ← algorithms.sha1.sha1_first_half h1 (i13, i14, i15, i16)
-    let h11 ← algorithms.sha1.sha1_digest_round_x4 h0 ux2 0#i8
-    let i17 ← Array.index_usize words 12#usize
-    let i18 ← Array.index_usize words 13#usize
-    let i19 ← Array.index_usize words 14#usize
-    let i20 ← Array.index_usize words 15#usize
-    let ux3 ← algorithms.sha1.sha1_first_half h0 (i17, i18, i19, i20)
-    let h01 ← algorithms.sha1.sha1_digest_round_x4 h11 ux3 0#i8
-    let ux4 ← algorithms.sha1.sha1msg1 (i4, i5, i6, i7) (i9, i10, i11, i12)
-    let ux5 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux4 (i13, i14, i15, i16)
-    let w4 ← algorithms.sha1.sha1msg2 ux5 (i17, i18, i19, i20)
-    let ux6 ← algorithms.sha1.sha1_first_half h11 w4
-    let h12 ← algorithms.sha1.sha1_digest_round_x4 h01 ux6 0#i8
-    let ux7 ←
-      algorithms.sha1.sha1msg1 (i9, i10, i11, i12) (i13, i14, i15, i16)
-    let ux8 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux7 (i17, i18, i19, i20)
-    let w0 ← algorithms.sha1.sha1msg2 ux8 w4
-    let ux9 ← algorithms.sha1.sha1_first_half h01 w0
-    let h02 ← algorithms.sha1.sha1_digest_round_x4 h12 ux9 1#i8
-    let ux10 ←
-      algorithms.sha1.sha1msg1 (i13, i14, i15, i16) (i17, i18, i19, i20)
-    let ux11 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux10 w4
-    let w1 ← algorithms.sha1.sha1msg2 ux11 w0
-    let ux12 ← algorithms.sha1.sha1_first_half h12 w1
-    let h13 ← algorithms.sha1.sha1_digest_round_x4 h02 ux12 1#i8
-    let ux13 ← algorithms.sha1.sha1msg1 (i17, i18, i19, i20) w4
-    let ux14 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux13 w0
-    let w2 ← algorithms.sha1.sha1msg2 ux14 w1
-    let ux15 ← algorithms.sha1.sha1_first_half h02 w2
-    let h03 ← algorithms.sha1.sha1_digest_round_x4 h13 ux15 1#i8
-    let ux16 ← algorithms.sha1.sha1msg1 w4 w0
-    let ux17 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux16 w1
-    let w3 ← algorithms.sha1.sha1msg2 ux17 w2
-    let ux18 ← algorithms.sha1.sha1_first_half h13 w3
-    let h14 ← algorithms.sha1.sha1_digest_round_x4 h03 ux18 1#i8
-    let ux19 ← algorithms.sha1.sha1msg1 w0 w1
-    let ux20 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux19 w2
-    let w41 ← algorithms.sha1.sha1msg2 ux20 w3
-    let ux21 ← algorithms.sha1.sha1_first_half h03 w41
-    let h04 ← algorithms.sha1.sha1_digest_round_x4 h14 ux21 1#i8
-    let ux22 ← algorithms.sha1.sha1msg1 w1 w2
-    let ux23 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux22 w3
-    let w01 ← algorithms.sha1.sha1msg2 ux23 w41
-    let ux24 ← algorithms.sha1.sha1_first_half h14 w01
-    let h15 ← algorithms.sha1.sha1_digest_round_x4 h04 ux24 2#i8
-    let ux25 ← algorithms.sha1.sha1msg1 w2 w3
-    let ux26 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux25 w41
-    let w11 ← algorithms.sha1.sha1msg2 ux26 w01
-    let ux27 ← algorithms.sha1.sha1_first_half h04 w11
-    let h05 ← algorithms.sha1.sha1_digest_round_x4 h15 ux27 2#i8
-    let ux28 ← algorithms.sha1.sha1msg1 w3 w41
-    let ux29 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux28 w01
-    let w21 ← algorithms.sha1.sha1msg2 ux29 w11
-    let ux30 ← algorithms.sha1.sha1_first_half h15 w21
-    let h16 ← algorithms.sha1.sha1_digest_round_x4 h05 ux30 2#i8
-    let ux31 ← algorithms.sha1.sha1msg1 w41 w01
-    let ux32 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux31 w11
-    let w31 ← algorithms.sha1.sha1msg2 ux32 w21
-    let ux33 ← algorithms.sha1.sha1_first_half h05 w31
-    let h06 ← algorithms.sha1.sha1_digest_round_x4 h16 ux33 2#i8
-    let ux34 ← algorithms.sha1.sha1msg1 w01 w11
-    let ux35 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux34 w21
-    let w42 ← algorithms.sha1.sha1msg2 ux35 w31
-    let ux36 ← algorithms.sha1.sha1_first_half h16 w42
-    let h17 ← algorithms.sha1.sha1_digest_round_x4 h06 ux36 2#i8
-    let ux37 ← algorithms.sha1.sha1msg1 w11 w21
-    let ux38 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux37 w31
-    let w02 ← algorithms.sha1.sha1msg2 ux38 w42
-    let ux39 ← algorithms.sha1.sha1_first_half h06 w02
-    let h07 ← algorithms.sha1.sha1_digest_round_x4 h17 ux39 3#i8
-    let ux40 ← algorithms.sha1.sha1msg1 w21 w31
-    let ux41 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux40 w42
-    let w12 ← algorithms.sha1.sha1msg2 ux41 w02
-    let ux42 ← algorithms.sha1.sha1_first_half h17 w12
-    let h18 ← algorithms.sha1.sha1_digest_round_x4 h07 ux42 3#i8
-    let ux43 ← algorithms.sha1.sha1msg1 w31 w42
-    let ux44 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux43 w02
-    let w22 ← algorithms.sha1.sha1msg2 ux44 w12
-    let ux45 ← algorithms.sha1.sha1_first_half h07 w22
-    let h08 ← algorithms.sha1.sha1_digest_round_x4 h18 ux45 3#i8
-    let ux46 ← algorithms.sha1.sha1msg1 w42 w02
-    let ux47 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux46 w12
-    let w32 ← algorithms.sha1.sha1msg2 ux47 w22
-    let ux48 ← algorithms.sha1.sha1_first_half h18 w32
-    let h19 ← algorithms.sha1.sha1_digest_round_x4 h08 ux48 3#i8
-    let ux49 ← algorithms.sha1.sha1msg1 w02 w12
-    let ux50 ←
-      algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
-        ux49 w22
-    let w43 ← algorithms.sha1.sha1msg2 ux50 w32
-    let ux51 ← algorithms.sha1.sha1_first_half h08 w43
-    let h09 ← algorithms.sha1.sha1_digest_round_x4 h19 ux51 3#i8
-    let _ ← algorithms.sha1.sha1_first h19
-    let (a, b, c, d) := h09
-    let i21 ← Array.index_usize state 0#usize
-    let i22 := core.num.U32.wrapping_add i21 a
-    let state1 ← Array.update_usize state 0#usize i22
-    let i23 ← Array.index_usize state1 1#usize
-    let i24 := core.num.U32.wrapping_add i23 b
-    let state2 ← Array.update_usize state1 1#usize i24
-    let i25 ← Array.index_usize state2 2#usize
-    let i26 := core.num.U32.wrapping_add i25 c
-    let state3 ← Array.update_usize state2 2#usize i26
-    let i27 ← Array.index_usize state3 3#usize
-    let i28 := core.num.U32.wrapping_add i27 d
-    let state4 ← Array.update_usize state3 3#usize i28
-    let _ ← Array.index_usize state4 4#usize
-    let _ ← Array.index_mut_usize state4 4#usize
-    Result.ok ()
+    algorithms.sha1.process_loop_loop block words1 index1
+  else Result.ok words
+
+/- [fips_implementations::algorithms::sha1::process_loop]:
+   Source: 'src/algorithms/sha1.rs', lines 304:0-316:1 -/
+def algorithms.sha1.process_loop
+  (block : Array U8 64#usize) : Result (Array U32 16#usize) :=
+  let words := Array.repeat 16#usize 0#u32
+  algorithms.sha1.process_loop_loop block words 0#usize
+
+/- [fips_implementations::algorithms::sha1::process_rounds_0]:
+   Source: 'src/algorithms/sha1.rs', lines 331:0-347:1 -/
+def algorithms.sha1.process_rounds_0
+  (h0 : algorithms.sha1.u32x4) (state : Array U32 5#usize)
+  (words : Array U32 16#usize) :
+  Result (algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
+    algorithms.sha1.u32x4 × algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
+    algorithms.sha1.u32x4)
+  :=
+  do
+  let i ← Array.index_usize words 0#usize
+  let i1 ← Array.index_usize words 1#usize
+  let i2 ← Array.index_usize words 2#usize
+  let i3 ← Array.index_usize words 3#usize
+  let i4 ← Array.index_usize state 4#usize
+  let ux ← algorithms.sha1.sha1_first_add i4 (i, i1, i2, i3)
+  let h1 ← algorithms.sha1.sha1_digest_round_x4 h0 ux 0#i8
+  let i5 ← Array.index_usize words 4#usize
+  let i6 ← Array.index_usize words 5#usize
+  let i7 ← Array.index_usize words 6#usize
+  let i8 ← Array.index_usize words 7#usize
+  let ux1 ← algorithms.sha1.sha1_first_half h0 (i5, i6, i7, i8)
+  let h01 ← algorithms.sha1.sha1_digest_round_x4 h1 ux1 0#i8
+  let i9 ← Array.index_usize words 8#usize
+  let i10 ← Array.index_usize words 9#usize
+  let i11 ← Array.index_usize words 10#usize
+  let i12 ← Array.index_usize words 11#usize
+  let ux2 ← algorithms.sha1.sha1_first_half h1 (i9, i10, i11, i12)
+  let h11 ← algorithms.sha1.sha1_digest_round_x4 h01 ux2 0#i8
+  let i13 ← Array.index_usize words 12#usize
+  let i14 ← Array.index_usize words 13#usize
+  let i15 ← Array.index_usize words 14#usize
+  let i16 ← Array.index_usize words 15#usize
+  let ux3 ← algorithms.sha1.sha1_first_half h01 (i13, i14, i15, i16)
+  let h02 ← algorithms.sha1.sha1_digest_round_x4 h11 ux3 0#i8
+  let ux4 ← algorithms.sha1.sha1msg1 (i, i1, i2, i3) (i5, i6, i7, i8)
+  let ux5 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux4 (i9, i10, i11, i12)
+  let w4 ← algorithms.sha1.sha1msg2 ux5 (i13, i14, i15, i16)
+  let ux6 ← algorithms.sha1.sha1_first_half h11 w4
+  let h12 ← algorithms.sha1.sha1_digest_round_x4 h02 ux6 0#i8
+  Result.ok (h02, h12, (i5, i6, i7, i8), (i9, i10, i11, i12), (i13, i14, i15,
+    i16), w4)
+
+/- [fips_implementations::algorithms::sha1::process_rounds_i]:
+   Source: 'src/algorithms/sha1.rs', lines 349:0-369:1 -/
+def algorithms.sha1.process_rounds_i
+  (h0 : algorithms.sha1.u32x4) (h1 : algorithms.sha1.u32x4)
+  (w1 : algorithms.sha1.u32x4) (w2 : algorithms.sha1.u32x4)
+  (w3 : algorithms.sha1.u32x4) (w4 : algorithms.sha1.u32x4) (i : I8) :
+  Result (algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
+    algorithms.sha1.u32x4 × algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
+    algorithms.sha1.u32x4)
+  :=
+  do
+  let ux ← algorithms.sha1.sha1msg1 w1 w2
+  let ux1 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux w3
+  let w0 ← algorithms.sha1.sha1msg2 ux1 w4
+  let ux2 ← algorithms.sha1.sha1_first_half h0 w0
+  let h01 ← algorithms.sha1.sha1_digest_round_x4 h1 ux2 i
+  let ux3 ← algorithms.sha1.sha1msg1 w2 w3
+  let ux4 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux3 w4
+  let w11 ← algorithms.sha1.sha1msg2 ux4 w0
+  let ux5 ← algorithms.sha1.sha1_first_half h1 w11
+  let h11 ← algorithms.sha1.sha1_digest_round_x4 h01 ux5 i
+  let ux6 ← algorithms.sha1.sha1msg1 w3 w4
+  let ux7 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux6 w0
+  let w21 ← algorithms.sha1.sha1msg2 ux7 w11
+  let ux8 ← algorithms.sha1.sha1_first_half h01 w21
+  let h02 ← algorithms.sha1.sha1_digest_round_x4 h11 ux8 i
+  let ux9 ← algorithms.sha1.sha1msg1 w4 w0
+  let ux10 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux9 w11
+  let w31 ← algorithms.sha1.sha1msg2 ux10 w21
+  let ux11 ← algorithms.sha1.sha1_first_half h11 w31
+  let h12 ← algorithms.sha1.sha1_digest_round_x4 h02 ux11 i
+  let ux12 ← algorithms.sha1.sha1msg1 w0 w11
+  let ux13 ←
+    algorithms.sha1.BitXorfips_implementationsalgorithmssha1u32x4fips_implementationsalgorithmssha1u32x4.bitxor
+      ux12 w21
+  let w41 ← algorithms.sha1.sha1msg2 ux13 w31
+  let ux14 ← algorithms.sha1.sha1_first_half h02 w41
+  let h03 ← algorithms.sha1.sha1_digest_round_x4 h12 ux14 i
+  Result.ok (h03, h12, w11, w21, w31, w41)
 
 /- [fips_implementations::algorithms::sha1::process]:
-   Source: 'src/algorithms/sha1.rs', lines 303:0-384:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 371:0-388:1 -/
 def algorithms.sha1.process
   (state : Array U32 5#usize) (block : Array U8 64#usize) :
   Result (Array U32 5#usize)
   :=
   do
-  let words := Array.repeat 16#usize 0#u32
-  algorithms.sha1.process_loop state block words 0#usize
-  Result.ok state
+  let words ← algorithms.sha1.process_loop block
+  let i ← Array.index_usize state 0#usize
+  let i1 ← Array.index_usize state 1#usize
+  let i2 ← Array.index_usize state 2#usize
+  let i3 ← Array.index_usize state 3#usize
+  let t ← algorithms.sha1.process_rounds_0 (i, i1, i2, i3) state words
+  let (h0, h1, w1, w2, w3, w4) := t
+  let t1 ← algorithms.sha1.process_rounds_i h0 h1 w1 w2 w3 w4 1#i8
+  let (h01, h11, w11, w21, w31, w41) := t1
+  let t2 ← algorithms.sha1.process_rounds_i h01 h11 w11 w21 w31 w41 2#i8
+  let (h02, h12, w12, w22, w32, w42) := t2
+  let t3 ← algorithms.sha1.process_rounds_i h02 h12 w12 w22 w32 w42 3#i8
+  let (h03, h13, _, _, _, _) := t3
+  let i4 ← algorithms.sha1.sha1_first h13
+  let e := core.num.U32.rotate_left i4 30#u32
+  let (a, b, c, d) := h03
+  let i5 ← Array.index_usize state 0#usize
+  let i6 := core.num.U32.wrapping_add i5 a
+  let state1 ← Array.update_usize state 0#usize i6
+  let i7 ← Array.index_usize state1 1#usize
+  let i8 := core.num.U32.wrapping_add i7 b
+  let state2 ← Array.update_usize state1 1#usize i8
+  let i9 ← Array.index_usize state2 2#usize
+  let i10 := core.num.U32.wrapping_add i9 c
+  let state3 ← Array.update_usize state2 2#usize i10
+  let i11 ← Array.index_usize state3 3#usize
+  let i12 := core.num.U32.wrapping_add i11 d
+  let state4 ← Array.update_usize state3 3#usize i12
+  let i13 ← Array.index_usize state4 4#usize
+  let i14 := core.num.U32.wrapping_add i13 e
+  let (_, index_mut_back) ← Array.index_mut_usize state4 4#usize
+  Result.ok (index_mut_back i14)
+
+/- [fips_implementations::algorithms::sha1::process_loop_aux]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 393:4-400:5 -/
+divergent def algorithms.sha1.process_loop_aux_loop
+  (block : Array U8 64#usize) (w : alloc.vec.Vec U32) (i : Usize) :
+  Result (alloc.vec.Vec U32)
+  :=
+  if i < 16#usize
+  then
+    do
+    let off ← i * 4#usize
+    let i1 ← Array.index_usize block off
+    let i2 ← Scalar.cast .U32 i1
+    let i3 ← i2 <<< 24#i32
+    let i4 ← off + 1#usize
+    let i5 ← Array.index_usize block i4
+    let i6 ← Scalar.cast .U32 i5
+    let i7 ← i6 <<< 16#i32
+    let i8 ← off + 2#usize
+    let i9 ← Array.index_usize block i8
+    let i10 ← Scalar.cast .U32 i9
+    let i11 ← i10 <<< 8#i32
+    let i12 ← off + 3#usize
+    let i13 ← Array.index_usize block i12
+    let i14 ← Scalar.cast .U32 i13
+    let (_, index_mut_back) ←
+      alloc.vec.Vec.index_mut (core.slice.index.SliceIndexUsizeSliceTInst U32)
+        w i
+    let i15 ← i + 1#usize
+    let w1 := index_mut_back (((i3 ||| i7) ||| i11) ||| i14)
+    algorithms.sha1.process_loop_aux_loop block w1 i15
+  else Result.ok w
+
+/- [fips_implementations::algorithms::sha1::process_loop_aux]:
+   Source: 'src/algorithms/sha1.rs', lines 391:0-401:1 -/
+def algorithms.sha1.process_loop_aux
+  (block : Array U8 64#usize) (w : alloc.vec.Vec U32) :
+  Result (alloc.vec.Vec U32)
+  :=
+  algorithms.sha1.process_loop_aux_loop block w 0#usize
+
+/- [fips_implementations::algorithms::sha1::process_w_aux]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 406:4-409:5 -/
+divergent def algorithms.sha1.process_w_aux_loop
+  (w : alloc.vec.Vec U32) (i : Usize) : Result (alloc.vec.Vec U32) :=
+  if i < 80#usize
+  then
+    do
+    let i1 ← i - 3#usize
+    let i2 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U32) w i1
+    let i3 ← i - 8#usize
+    let i4 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U32) w i3
+    let i5 ← i - 14#usize
+    let i6 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U32) w i5
+    let i7 ← i - 16#usize
+    let i8 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U32) w i7
+    let i9 := core.num.U32.rotate_left (((i2 ^^^ i4) ^^^ i6) ^^^ i8) 1#u32
+    let (_, index_mut_back) ←
+      alloc.vec.Vec.index_mut (core.slice.index.SliceIndexUsizeSliceTInst U32)
+        w i
+    let i10 ← i + 1#usize
+    let w1 := index_mut_back i9
+    algorithms.sha1.process_w_aux_loop w1 i10
+  else Result.ok w
+
+/- [fips_implementations::algorithms::sha1::process_w_aux]:
+   Source: 'src/algorithms/sha1.rs', lines 404:0-410:1 -/
+def algorithms.sha1.process_w_aux
+  (w : alloc.vec.Vec U32) : Result (alloc.vec.Vec U32) :=
+  algorithms.sha1.process_w_aux_loop w 16#usize
+
+/- [fips_implementations::algorithms::sha1::process_core_aux]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 421:4-454:5 -/
+divergent def algorithms.sha1.process_core_aux_loop
+  (w : alloc.vec.Vec U32) (a : U32) (b : U32) (c : U32) (d : U32) (e : U32)
+  (i : Usize) :
+  Result (Array U32 5#usize)
+  :=
+  if i < 80#usize
+  then
+    if 0#usize <= i
+    then
+      if i <= 19#usize
+      then
+        do
+        let i1 := core.num.U32.rotate_left a 5#u32
+        let i2 := core.num.U32.wrapping_add i1 ((b &&& c) ||| ((￢ b) &&& d))
+        let i3 := core.num.U32.wrapping_add i2 e
+        let i4 := core.num.U32.wrapping_add i3 1518500249#u32
+        let i5 ←
+          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst U32)
+            w i
+        let temp := core.num.U32.wrapping_add i4 i5
+        let c1 := core.num.U32.rotate_left b 30#u32
+        let i6 ← i + 1#usize
+        algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+      else
+        if 20#usize <= i
+        then
+          if i <= 39#usize
+          then
+            do
+            let i1 := core.num.U32.rotate_left a 5#u32
+            let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+            let i3 := core.num.U32.wrapping_add i2 e
+            let i4 := core.num.U32.wrapping_add i3 1859775393#u32
+            let i5 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                U32) w i
+            let temp := core.num.U32.wrapping_add i4 i5
+            let c1 := core.num.U32.rotate_left b 30#u32
+            let i6 ← i + 1#usize
+            algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+          else
+            if 40#usize <= i
+            then
+              if i <= 59#usize
+              then
+                do
+                let i1 := core.num.U32.rotate_left a 5#u32
+                let i2 :=
+                  core.num.U32.wrapping_add i1 (((b &&& c) ||| (b &&& d)) |||
+                    (c &&& d))
+                let i3 := core.num.U32.wrapping_add i2 e
+                let i4 := core.num.U32.wrapping_add i3 2400959708#u32
+                let i5 ←
+                  alloc.vec.Vec.index
+                    (core.slice.index.SliceIndexUsizeSliceTInst U32) w i
+                let temp := core.num.U32.wrapping_add i4 i5
+                let c1 := core.num.U32.rotate_left b 30#u32
+                let i6 ← i + 1#usize
+                algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+              else
+                do
+                let i1 := core.num.U32.rotate_left a 5#u32
+                let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+                let i3 := core.num.U32.wrapping_add i2 e
+                let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+                let i5 ←
+                  alloc.vec.Vec.index
+                    (core.slice.index.SliceIndexUsizeSliceTInst U32) w i
+                let temp := core.num.U32.wrapping_add i4 i5
+                let c1 := core.num.U32.rotate_left b 30#u32
+                let i6 ← i + 1#usize
+                algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+            else
+              do
+              let i1 := core.num.U32.rotate_left a 5#u32
+              let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+              let i3 := core.num.U32.wrapping_add i2 e
+              let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                  U32) w i
+              let temp := core.num.U32.wrapping_add i4 i5
+              let c1 := core.num.U32.rotate_left b 30#u32
+              let i6 ← i + 1#usize
+              algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+        else
+          if 40#usize <= i
+          then
+            if i <= 59#usize
+            then
+              do
+              let i1 := core.num.U32.rotate_left a 5#u32
+              let i2 :=
+                core.num.U32.wrapping_add i1 (((b &&& c) ||| (b &&& d)) ||| (c
+                  &&& d))
+              let i3 := core.num.U32.wrapping_add i2 e
+              let i4 := core.num.U32.wrapping_add i3 2400959708#u32
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                  U32) w i
+              let temp := core.num.U32.wrapping_add i4 i5
+              let c1 := core.num.U32.rotate_left b 30#u32
+              let i6 ← i + 1#usize
+              algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+            else
+              do
+              let i1 := core.num.U32.rotate_left a 5#u32
+              let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+              let i3 := core.num.U32.wrapping_add i2 e
+              let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                  U32) w i
+              let temp := core.num.U32.wrapping_add i4 i5
+              let c1 := core.num.U32.rotate_left b 30#u32
+              let i6 ← i + 1#usize
+              algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+          else
+            do
+            let i1 := core.num.U32.rotate_left a 5#u32
+            let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+            let i3 := core.num.U32.wrapping_add i2 e
+            let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+            let i5 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                U32) w i
+            let temp := core.num.U32.wrapping_add i4 i5
+            let c1 := core.num.U32.rotate_left b 30#u32
+            let i6 ← i + 1#usize
+            algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+    else
+      if 20#usize <= i
+      then
+        if i <= 39#usize
+        then
+          do
+          let i1 := core.num.U32.rotate_left a 5#u32
+          let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+          let i3 := core.num.U32.wrapping_add i2 e
+          let i4 := core.num.U32.wrapping_add i3 1859775393#u32
+          let i5 ←
+            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+              U32) w i
+          let temp := core.num.U32.wrapping_add i4 i5
+          let c1 := core.num.U32.rotate_left b 30#u32
+          let i6 ← i + 1#usize
+          algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+        else
+          if 40#usize <= i
+          then
+            if i <= 59#usize
+            then
+              do
+              let i1 := core.num.U32.rotate_left a 5#u32
+              let i2 :=
+                core.num.U32.wrapping_add i1 (((b &&& c) ||| (b &&& d)) ||| (c
+                  &&& d))
+              let i3 := core.num.U32.wrapping_add i2 e
+              let i4 := core.num.U32.wrapping_add i3 2400959708#u32
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                  U32) w i
+              let temp := core.num.U32.wrapping_add i4 i5
+              let c1 := core.num.U32.rotate_left b 30#u32
+              let i6 ← i + 1#usize
+              algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+            else
+              do
+              let i1 := core.num.U32.rotate_left a 5#u32
+              let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+              let i3 := core.num.U32.wrapping_add i2 e
+              let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                  U32) w i
+              let temp := core.num.U32.wrapping_add i4 i5
+              let c1 := core.num.U32.rotate_left b 30#u32
+              let i6 ← i + 1#usize
+              algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+          else
+            do
+            let i1 := core.num.U32.rotate_left a 5#u32
+            let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+            let i3 := core.num.U32.wrapping_add i2 e
+            let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+            let i5 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                U32) w i
+            let temp := core.num.U32.wrapping_add i4 i5
+            let c1 := core.num.U32.rotate_left b 30#u32
+            let i6 ← i + 1#usize
+            algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+      else
+        if 40#usize <= i
+        then
+          if i <= 59#usize
+          then
+            do
+            let i1 := core.num.U32.rotate_left a 5#u32
+            let i2 :=
+              core.num.U32.wrapping_add i1 (((b &&& c) ||| (b &&& d)) ||| (c
+                &&& d))
+            let i3 := core.num.U32.wrapping_add i2 e
+            let i4 := core.num.U32.wrapping_add i3 2400959708#u32
+            let i5 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                U32) w i
+            let temp := core.num.U32.wrapping_add i4 i5
+            let c1 := core.num.U32.rotate_left b 30#u32
+            let i6 ← i + 1#usize
+            algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+          else
+            do
+            let i1 := core.num.U32.rotate_left a 5#u32
+            let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+            let i3 := core.num.U32.wrapping_add i2 e
+            let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+            let i5 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+                U32) w i
+            let temp := core.num.U32.wrapping_add i4 i5
+            let c1 := core.num.U32.rotate_left b 30#u32
+            let i6 ← i + 1#usize
+            algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+        else
+          do
+          let i1 := core.num.U32.rotate_left a 5#u32
+          let i2 := core.num.U32.wrapping_add i1 ((b ^^^ c) ^^^ d)
+          let i3 := core.num.U32.wrapping_add i2 e
+          let i4 := core.num.U32.wrapping_add i3 3395469782#u32
+          let i5 ←
+            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst
+              U32) w i
+          let temp := core.num.U32.wrapping_add i4 i5
+          let c1 := core.num.U32.rotate_left b 30#u32
+          let i6 ← i + 1#usize
+          algorithms.sha1.process_core_aux_loop w temp a c1 c d i6
+  else Result.ok (Array.make 5#usize [ a, b, c, d, e ])
+
+/- [fips_implementations::algorithms::sha1::process_core_aux]:
+   Source: 'src/algorithms/sha1.rs', lines 413:0-457:1 -/
+def algorithms.sha1.process_core_aux
+  (state : Array U32 5#usize) (w : alloc.vec.Vec U32) :
+  Result ((Array U32 5#usize) × (alloc.vec.Vec U32))
+  :=
+  do
+  let a ← Array.index_usize state 0#usize
+  let b ← Array.index_usize state 1#usize
+  let c ← Array.index_usize state 2#usize
+  let d ← Array.index_usize state 3#usize
+  let e ← Array.index_usize state 4#usize
+  let a1 ← algorithms.sha1.process_core_aux_loop w a b c d e 0#usize
+  Result.ok (a1, w)
+
+/- [alloc::vec::from_elem]:
+   Source: '/rustc/library/alloc/src/vec/mod.rs', lines 3172:0-3172:55
+   Name pattern: alloc::vec::from_elem -/
+axiom alloc.vec.from_elem
+  {T : Type} (corecloneCloneInst : core.clone.Clone T) :
+  T → Usize → Result (alloc.vec.Vec T)
+
+/- [fips_implementations::algorithms::sha1::process_aux]:
+   Source: 'src/algorithms/sha1.rs', lines 461:0-474:1 -/
+def algorithms.sha1.process_aux
+  (state : Array U32 5#usize) (block : Array U8 64#usize) :
+  Result (Array U32 5#usize)
+  :=
+  do
+  let w ← alloc.vec.from_elem core.clone.CloneU32 0#u32 80#usize
+  let w1 ← algorithms.sha1.process_loop_aux block w
+  let w2 ← algorithms.sha1.process_w_aux w1
+  let (a, _) ← algorithms.sha1.process_core_aux state w2
+  let a1 ← Array.index_usize a 0#usize
+  let b ← Array.index_usize a 1#usize
+  let c ← Array.index_usize a 2#usize
+  let d ← Array.index_usize a 3#usize
+  let e ← Array.index_usize a 4#usize
+  let i ← Array.index_usize state 0#usize
+  let i1 := core.num.U32.wrapping_add i a1
+  let state1 ← Array.update_usize state 0#usize i1
+  let i2 ← Array.index_usize state1 1#usize
+  let i3 := core.num.U32.wrapping_add i2 b
+  let state2 ← Array.update_usize state1 1#usize i3
+  let i4 ← Array.index_usize state2 2#usize
+  let i5 := core.num.U32.wrapping_add i4 c
+  let state3 ← Array.update_usize state2 2#usize i5
+  let i6 ← Array.index_usize state3 3#usize
+  let i7 := core.num.U32.wrapping_add i6 d
+  let state4 ← Array.update_usize state3 3#usize i7
+  let i8 ← Array.index_usize state4 4#usize
+  let i9 := core.num.U32.wrapping_add i8 e
+  let (_, index_mut_back) ← Array.index_mut_usize state4 4#usize
+  Result.ok (index_mut_back i9)
 
 /- [fips_implementations::algorithms::sha1::chunkify]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 390:4-399:5 -/
+   Source: 'src/algorithms/sha1.rs', lines 480:4-489:5 -/
 divergent def algorithms.sha1.chunkify_loop
   (msg : Slice U8) (chunks : alloc.vec.Vec (Array U8 64#usize))
   (msg_start : Usize) :
@@ -1762,17 +1133,16 @@ divergent def algorithms.sha1.chunkify_loop
   else Result.ok chunks
 
 /- [fips_implementations::algorithms::sha1::chunkify]:
-   Source: 'src/algorithms/sha1.rs', lines 386:0-401:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 476:0-491:1 -/
 def algorithms.sha1.chunkify
   (msg : Slice U8) : Result (alloc.vec.Vec (Array U8 64#usize)) :=
   algorithms.sha1.chunkify_loop msg (alloc.vec.Vec.new (Array U8 64#usize))
     0#usize
 
-/- [fips_implementations::algorithms::sha1::pad_message]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 417:4-420:5 -/
-divergent def algorithms.sha1.pad_message_loop
-  (msg_len_bits : U64) (padded_msg : alloc.vec.Vec U8)
-  (zero_padding_length : Usize) (i : Usize) :
+/- [fips_implementations::algorithms::sha1::pad_message_loop]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 496:4-499:5 -/
+divergent def algorithms.sha1.pad_message_loop_loop
+  (padded_msg : alloc.vec.Vec U8) (zero_padding_length : Usize) (i : Usize) :
   Result (alloc.vec.Vec U8)
   :=
   if i < zero_padding_length
@@ -1780,33 +1150,19 @@ divergent def algorithms.sha1.pad_message_loop
     do
     let padded_msg1 ← alloc.vec.Vec.push padded_msg 0#u8
     let i1 ← i + 1#usize
-    algorithms.sha1.pad_message_loop msg_len_bits padded_msg1
-      zero_padding_length i1
-  else
-    do
-    let i1 ← msg_len_bits >>> 56#u64
-    let i2 ← Scalar.cast .U8 (i1 &&& 255#u64)
-    let i3 ← msg_len_bits >>> 48#u64
-    let i4 ← Scalar.cast .U8 (i3 &&& 255#u64)
-    let i5 ← msg_len_bits >>> 40#u64
-    let i6 ← Scalar.cast .U8 (i5 &&& 255#u64)
-    let i7 ← msg_len_bits >>> 32#u64
-    let i8 ← Scalar.cast .U8 (i7 &&& 255#u64)
-    let i9 ← msg_len_bits >>> 24#u64
-    let i10 ← Scalar.cast .U8 (i9 &&& 255#u64)
-    let i11 ← msg_len_bits >>> 16#u64
-    let i12 ← Scalar.cast .U8 (i11 &&& 255#u64)
-    let i13 ← msg_len_bits >>> 8#u64
-    let i14 ← Scalar.cast .U8 (i13 &&& 255#u64)
-    let i15 ← msg_len_bits >>> 0#u64
-    let i16 ← Scalar.cast .U8 (i15 &&& 255#u64)
-    let s ←
-      Array.to_slice
-        (Array.make 8#usize [ i2, i4, i6, i8, i10, i12, i14, i16 ])
-    alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg s
+    algorithms.sha1.pad_message_loop_loop padded_msg1 zero_padding_length i1
+  else Result.ok padded_msg
+
+/- [fips_implementations::algorithms::sha1::pad_message_loop]:
+   Source: 'src/algorithms/sha1.rs', lines 494:0-500:1 -/
+def algorithms.sha1.pad_message_loop
+  (padded_msg : alloc.vec.Vec U8) (zero_padding_length : Usize) :
+  Result (alloc.vec.Vec U8)
+  :=
+  algorithms.sha1.pad_message_loop_loop padded_msg zero_padding_length 0#usize
 
 /- [fips_implementations::algorithms::sha1::pad_message]:
-   Source: 'src/algorithms/sha1.rs', lines 403:0-449:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 502:0-532:1 -/
 def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   do
   let i := Slice.len msg
@@ -1823,11 +1179,31 @@ def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   let i6 ← i5 % 64#usize
   let i7 ← 56#usize - i6
   let zero_padding_length ← i7 % 64#usize
-  algorithms.sha1.pad_message_loop msg_len_bits padded_msg2 zero_padding_length
-    0#usize
+  let padded_msg3 ←
+    algorithms.sha1.pad_message_loop padded_msg2 zero_padding_length
+  let i8 ← msg_len_bits >>> 56#u64
+  let i9 ← Scalar.cast .U8 (i8 &&& 255#u64)
+  let i10 ← msg_len_bits >>> 48#u64
+  let i11 ← Scalar.cast .U8 (i10 &&& 255#u64)
+  let i12 ← msg_len_bits >>> 40#u64
+  let i13 ← Scalar.cast .U8 (i12 &&& 255#u64)
+  let i14 ← msg_len_bits >>> 32#u64
+  let i15 ← Scalar.cast .U8 (i14 &&& 255#u64)
+  let i16 ← msg_len_bits >>> 24#u64
+  let i17 ← Scalar.cast .U8 (i16 &&& 255#u64)
+  let i18 ← msg_len_bits >>> 16#u64
+  let i19 ← Scalar.cast .U8 (i18 &&& 255#u64)
+  let i20 ← msg_len_bits >>> 8#u64
+  let i21 ← Scalar.cast .U8 (i20 &&& 255#u64)
+  let i22 ← msg_len_bits >>> 0#u64
+  let i23 ← Scalar.cast .U8 (i22 &&& 255#u64)
+  let s ←
+    Array.to_slice
+      (Array.make 8#usize [ i9, i11, i13, i15, i17, i19, i21, i23 ])
+  alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg3 s
 
 /- [fips_implementations::algorithms::sha1::hash_to_vec]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 454:4-461:5 -/
+   Source: 'src/algorithms/sha1.rs', lines 537:4-545:5 -/
 divergent def algorithms.sha1.hash_to_vec_loop
   (final_hash : Array U32 5#usize) (result_bytes : alloc.vec.Vec U8)
   (index : Usize) :
@@ -1840,16 +1216,16 @@ divergent def algorithms.sha1.hash_to_vec_loop
   then
     do
     let word ← Array.index_usize final_hash index
-    let i1 ← word >>> 24#i32
+    let i1 ← word >>> 24#u32
     let i2 ← Scalar.cast .U8 (i1 &&& 255#u32)
     let result_bytes1 ← alloc.vec.Vec.push result_bytes i2
-    let i3 ← word >>> 16#i32
+    let i3 ← word >>> 16#u32
     let i4 ← Scalar.cast .U8 (i3 &&& 255#u32)
     let result_bytes2 ← alloc.vec.Vec.push result_bytes1 i4
-    let i5 ← word >>> 8#i32
+    let i5 ← word >>> 8#u32
     let i6 ← Scalar.cast .U8 (i5 &&& 255#u32)
     let result_bytes3 ← alloc.vec.Vec.push result_bytes2 i6
-    let i7 ← word >>> 0#i32
+    let i7 ← word >>> 0#u32
     let i8 ← Scalar.cast .U8 (i7 &&& 255#u32)
     let result_bytes4 ← alloc.vec.Vec.push result_bytes3 i8
     let index1 ← index + 1#usize
@@ -1857,13 +1233,13 @@ divergent def algorithms.sha1.hash_to_vec_loop
   else Result.ok result_bytes
 
 /- [fips_implementations::algorithms::sha1::hash_to_vec]:
-   Source: 'src/algorithms/sha1.rs', lines 451:0-463:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 534:0-547:1 -/
 def algorithms.sha1.hash_to_vec
   (final_hash : Array U32 5#usize) : Result (alloc.vec.Vec U8) :=
   algorithms.sha1.hash_to_vec_loop final_hash (alloc.vec.Vec.new U8) 0#usize
 
 /- [fips_implementations::algorithms::sha1::hash]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 470:4-474:5 -/
+   Source: 'src/algorithms/sha1.rs', lines 554:4-558:5 -/
 divergent def algorithms.sha1.hash_loop
   (chunks : alloc.vec.Vec (Array U8 64#usize)) (state : Array U32 5#usize)
   (chunk_index : Usize) :
@@ -1882,12 +1258,41 @@ divergent def algorithms.sha1.hash_loop
   else algorithms.sha1.hash_to_vec state
 
 /- [fips_implementations::algorithms::sha1::hash]:
-   Source: 'src/algorithms/sha1.rs', lines 465:0-476:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 549:0-560:1 -/
 def algorithms.sha1.hash (message : Slice U8) : Result (alloc.vec.Vec U8) :=
   do
   let padded_msg ← algorithms.sha1.pad_message message
   let s := alloc.vec.DerefVec.deref padded_msg
   let chunks ← algorithms.sha1.chunkify s
   algorithms.sha1.hash_loop chunks algorithms.sha1.INITIAL_STATE 0#usize
+
+/- [fips_implementations::algorithms::sha1::hash_aux]: loop 0:
+   Source: 'src/algorithms/sha1.rs', lines 568:4-572:5 -/
+divergent def algorithms.sha1.hash_aux_loop
+  (chunks : alloc.vec.Vec (Array U8 64#usize)) (state : Array U32 5#usize)
+  (chunk_index : Usize) :
+  Result (alloc.vec.Vec U8)
+  :=
+  let i := alloc.vec.Vec.len chunks
+  if chunk_index < i
+  then
+    do
+    let chunk ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSliceTInst (Array U8
+        64#usize)) chunks chunk_index
+    let state1 ← algorithms.sha1.process_aux state chunk
+    let chunk_index1 ← chunk_index + 1#usize
+    algorithms.sha1.hash_aux_loop chunks state1 chunk_index1
+  else algorithms.sha1.hash_to_vec state
+
+/- [fips_implementations::algorithms::sha1::hash_aux]:
+   Source: 'src/algorithms/sha1.rs', lines 563:0-574:1 -/
+def algorithms.sha1.hash_aux
+  (message : Slice U8) : Result (alloc.vec.Vec U8) :=
+  do
+  let padded_msg ← algorithms.sha1.pad_message message
+  let s := alloc.vec.DerefVec.deref padded_msg
+  let chunks ← algorithms.sha1.chunkify s
+  algorithms.sha1.hash_aux_loop chunks algorithms.sha1.INITIAL_STATE 0#usize
 
 end fips_implementations
