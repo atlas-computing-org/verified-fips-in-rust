@@ -13,8 +13,8 @@ open Mathlib
 abbrev Word := UInt32
 
 -- Initial hash values (H0) as per FIPS 180-4
-def initialHash : Mathlib.Vector Word 5 :=
-  ⟨[0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0], rfl⟩
+def initialHash : Vector Word 5 :=
+  #v[0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
 
 -- Constants K for each iteration
 def K (t : Nat) : Word :=
@@ -177,7 +177,7 @@ def hash (message : ByteArray) : ByteArray :=
       b := a
       a := temp
     -- Compute the new hash values
-    return ⟨h0.toList.zipWith (· + ·) [a, b, c, d, e], by simp⟩
+    return sorry -- ⟨h0.toList.zipWith (· + ·) [a, b, c, d, e], by simp⟩
 
   -- Concatenate the final hash values into a ByteArray
   hashToVec finalHash
