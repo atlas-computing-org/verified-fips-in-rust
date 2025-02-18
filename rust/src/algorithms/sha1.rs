@@ -2,7 +2,7 @@
 //! Adapted from https://github.com/mitsuhiko/sha1-smol
 
 // Basic operations for u32x4
-use core::ops::{Add, BitAnd, BitOr, BitXor, Shl, Shr, Sub};
+use core::ops::{Add, BitXor};
 
 #[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
@@ -21,45 +21,6 @@ impl Add for u32x4 {
     }
 }
 
-impl Sub for u32x4 {
-    type Output = u32x4;
-
-    fn sub(self, rhs: u32x4) -> u32x4 {
-        u32x4(
-            self.0.wrapping_sub(rhs.0),
-            self.1.wrapping_sub(rhs.1),
-            self.2.wrapping_sub(rhs.2),
-            self.3.wrapping_sub(rhs.3),
-        )
-    }
-}
-
-impl BitAnd for u32x4 {
-    type Output = u32x4;
-
-    fn bitand(self, rhs: u32x4) -> u32x4 {
-        u32x4(
-            self.0 & rhs.0,
-            self.1 & rhs.1,
-            self.2 & rhs.2,
-            self.3 & rhs.3,
-        )
-    }
-}
-
-impl BitOr for u32x4 {
-    type Output = u32x4;
-
-    fn bitor(self, rhs: u32x4) -> u32x4 {
-        u32x4(
-            self.0 | rhs.0,
-            self.1 | rhs.1,
-            self.2 | rhs.2,
-            self.3 | rhs.3,
-        )
-    }
-}
-
 impl BitXor for u32x4 {
     type Output = u32x4;
 
@@ -69,48 +30,6 @@ impl BitXor for u32x4 {
             self.1 ^ rhs.1,
             self.2 ^ rhs.2,
             self.3 ^ rhs.3,
-        )
-    }
-}
-
-impl Shl<usize> for u32x4 {
-    type Output = u32x4;
-
-    fn shl(self, amt: usize) -> u32x4 {
-        u32x4(self.0 << amt, self.1 << amt, self.2 << amt, self.3 << amt)
-    }
-}
-
-impl Shl<u32x4> for u32x4 {
-    type Output = u32x4;
-
-    fn shl(self, rhs: u32x4) -> u32x4 {
-        u32x4(
-            self.0 << rhs.0,
-            self.1 << rhs.1,
-            self.2 << rhs.2,
-            self.3 << rhs.3,
-        )
-    }
-}
-
-impl Shr<usize> for u32x4 {
-    type Output = u32x4;
-
-    fn shr(self, amt: usize) -> u32x4 {
-        u32x4(self.0 >> amt, self.1 >> amt, self.2 >> amt, self.3 >> amt)
-    }
-}
-
-impl Shr<u32x4> for u32x4 {
-    type Output = u32x4;
-
-    fn shr(self, rhs: u32x4) -> u32x4 {
-        u32x4(
-            self.0 >> rhs.0,
-            self.1 >> rhs.1,
-            self.2 >> rhs.2,
-            self.3 >> rhs.3,
         )
     }
 }
@@ -168,7 +87,7 @@ fn sha1_first_half(abcd: u32x4, msg: u32x4) -> u32x4 {
 
 /// Emulates `llvm.x86.sha1rnds4` intrinsic.
 /// Performs 4 rounds of the message block digest.
-fn sha1_digest_round_x4(abcd: u32x4, work: u32x4, i: i8) -> u32x4 {
+fn sha1_digest_round_x4(abcd: u32x4, work: u32x4, i: u8) -> u32x4 {
     const K0V: u32x4 = u32x4(K0, K0, K0, K0);
     const K1V: u32x4 = u32x4(K1, K1, K1, K1);
     const K2V: u32x4 = u32x4(K2, K2, K2, K2);
@@ -306,10 +225,11 @@ fn process_loop(block: &[u8; 64]) -> [u32; 16] {
     let mut index = 0;
     while index < 16 {
         let off = index * 4;
+        // Change: Normalize to u32
         words[index] = (block[off + 3] as u32)
-            | ((block[off + 2] as u32) << 8)
-            | ((block[off + 1] as u32) << 16)
-            | ((block[off] as u32) << 24);
+            | ((block[off + 2] as u32) << 8u32)
+            | ((block[off + 1] as u32) << 16u32)
+            | ((block[off] as u32) << 24u32);
         index += 1;
     }
     words
@@ -347,24 +267,20 @@ fn process_rounds_0(
 }
 
 fn process_rounds_i(
-    mut h0: u32x4,
-    mut h1: u32x4,
-    w1: u32x4,
-    w2: u32x4,
-    w3: u32x4,
-    w4: u32x4,
-    i: i8,
+    args: (u32x4, u32x4, u32x4, u32x4, u32x4, u32x4),
+    i: u8,
 ) -> (u32x4, u32x4, u32x4, u32x4, u32x4, u32x4) {
+    let (h0, h1, w1, w2, w3, w4) = args;
     let w0 = schedule!(w1, w2, w3, w4);
-    h0 = rounds4!(h1, h0, w0, i);
+    let h0 = rounds4!(h1, h0, w0, i);
     let w1 = schedule!(w2, w3, w4, w0);
-    h1 = rounds4!(h0, h1, w1, i);
+    let h1 = rounds4!(h0, h1, w1, i);
     let w2 = schedule!(w3, w4, w0, w1);
-    h0 = rounds4!(h1, h0, w2, i);
+    let h0 = rounds4!(h1, h0, w2, i);
     let w3 = schedule!(w4, w0, w1, w2);
-    h1 = rounds4!(h0, h1, w3, i);
+    let h1 = rounds4!(h0, h1, w3, i);
     let w4 = schedule!(w0, w1, w2, w3);
-    h0 = rounds4!(h1, h0, w4, i);
+    let h0 = rounds4!(h1, h0, w4, i);
     (h0, h1, w1, w2, w3, w4)
 }
 
@@ -372,99 +288,13 @@ fn process(state: &mut [u32; 5], block: &[u8; 64]) {
     let words = process_loop(block);
     let h0 = u32x4(state[0], state[1], state[2], state[3]);
 
-    let (h0, h1, w1, w2, w3, w4) = process_rounds_0(h0, state, &words);
-    let (h0, h1, w1, w2, w3, w4) = process_rounds_i(h0, h1, w1, w2, w3, w4, 1);
-    let (h0, h1, w1, w2, w3, w4) = process_rounds_i(h0, h1, w1, w2, w3, w4, 2);
-    let (h0, h1, _, _, _, _) = process_rounds_i(h0, h1, w1, w2, w3, w4, 3);
+    let args = process_rounds_0(h0, state, &words);
+    let args = process_rounds_i(args, 1);
+    let args = process_rounds_i(args, 2);
+    let (h0, h1, _, _, _, _) = process_rounds_i(args, 3);
 
     let e = sha1_first(h1).rotate_left(30);
     let u32x4(a, b, c, d) = h0;
-
-    state[0] = state[0].wrapping_add(a);
-    state[1] = state[1].wrapping_add(b);
-    state[2] = state[2].wrapping_add(c);
-    state[3] = state[3].wrapping_add(d);
-    state[4] = state[4].wrapping_add(e);
-}
-
-/// Change: Aux version that is closer to Lean reference.
-fn process_loop_aux(block: &[u8; 64], w: &mut Vec<u32>) {
-    let mut i = 0;
-    while i < 16 {
-        let off = i * 4;
-        w[i] = ((block[off] as u32) << 24)
-            | ((block[off + 1] as u32) << 16)
-            | ((block[off + 2] as u32) << 8)
-            | (block[off + 3] as u32);
-        i += 1;
-    }
-}
-
-/// Change: Aux version that is closer to Lean reference.
-fn process_w_aux(w: &mut Vec<u32>) {
-    let mut i = 16;
-    while i < 80 {
-        w[i] = (w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16]).rotate_left(1);
-        i += 1;
-    }
-}
-
-/// Change: Aux version that is closer to Lean reference.
-fn process_core_aux(state: &[u32; 5], w: &mut Vec<u32>) -> [u32; 5] {
-    let mut a = state[0];
-    let mut b = state[1];
-    let mut c = state[2];
-    let mut d = state[3];
-    let mut e = state[4];
-    
-    let mut i = 0;
-    while i < 80 {
-        let (f, k) = match i {
-            0..=19 => {
-                let f = (b & c) | (!b & d);
-                (f, 0x5A827999u32)
-            }
-            20..=39 => {
-                let f = b ^ c ^ d;
-                (f, 0x6ED9EBA1u32)
-            }
-            40..=59 => {
-                let f = (b & c) | (b & d) | (c & d);
-                (f, 0x8F1BBCDCu32)
-            }
-            _ => {
-                let f: u32 = b ^ c ^ d;
-                (f, 0xCA62C1D6u32)
-            }
-        };
-
-        let temp = a
-            .rotate_left(5)
-            .wrapping_add(f)
-            .wrapping_add(e)
-            .wrapping_add(k)
-            .wrapping_add(w[i]);
-
-        e = d;
-        d = c;
-        c = b.rotate_left(30);
-        b = a;
-        a = temp;
-        i += 1;
-    }
-
-    [a, b, c, d, e]
-}
-
-/// Change: Aux version that is closer to Lean reference.
-/// We also break up the 3 loops inside into 3 separate functions, as Aeneas can't handle multiple loops.
-fn process_aux(state: &mut [u32; 5], block: &[u8; 64]) {
-    let mut w = vec![0u32; 80];
-    process_loop_aux(block, &mut w);
-    
-    process_w_aux(&mut w);
-
-    let [a, b, c, d, e] = process_core_aux(state, &mut w);
 
     state[0] = state[0].wrapping_add(a);
     state[1] = state[1].wrapping_add(b);
@@ -509,7 +339,8 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
     padded_msg.push(0x80); // Append the '1' bit and seven '0' bits (0x80 in hex)
 
     // Step 3: Calculate zero-padding length
-    let zero_padding_length = (56 - ((padded_msg.len()) % 64)) % 64;
+    let len = padded_msg.len();
+    let zero_padding_length = (64 - len % 64 + 56) % 64;
 
     // Step 4: Append zero padding
     pad_message_loop(&mut padded_msg, zero_padding_length);
@@ -536,7 +367,7 @@ fn hash_to_vec(final_hash: [u32; 5]) -> Vec<u8> {
     let mut index = 0;
     while index < final_hash.len() {
         let word = final_hash[index];
-        // Change: Normalize to u32let
+        // Change: Normalize to u32
         result_bytes.push(((word >> 24u32) & 0xFF) as u8);
         result_bytes.push(((word >> 16u32) & 0xFF) as u8);
         result_bytes.push(((word >> 8u32) & 0xFF) as u8);
@@ -546,29 +377,31 @@ fn hash_to_vec(final_hash: [u32; 5]) -> Vec<u8> {
     result_bytes
 }
 
+fn hash_loop(chunks: Vec<[u8; 64]>, state: &mut [u32; 5]) {
+    let mut chunk_index = 0;
+    while chunk_index < chunks.len() {
+        let chunk = &chunks[chunk_index];
+        process(state, chunk);
+        chunk_index += 1;
+    }
+}
+
 fn hash(message: &[u8]) -> Vec<u8> {
     let padded_msg = pad_message(message);
     let chunks = chunkify(&padded_msg);
     let mut state = INITIAL_STATE;
-    let mut chunk_index = 0;
-    while chunk_index < chunks.len() {
-        let chunk = &chunks[chunk_index];
-        process(&mut state, chunk);
-        chunk_index += 1;
-    }
+    hash_loop(chunks, &mut state);
     hash_to_vec(state)
 }
 
-/// Change: Aux version that is closer to Lean reference.
-fn hash_aux(message: &[u8]) -> Vec<u8> {
-    let padded_msg = pad_message(message);
-    let chunks = chunkify(&padded_msg);
-    let mut state = INITIAL_STATE;
-    let mut chunk_index = 0;
-    while chunk_index < chunks.len() {
-        let chunk = &chunks[chunk_index];
-        process_aux(&mut state, chunk);
-        chunk_index += 1;
+#[cfg(test)]
+mod tests {
+    use crate::algorithms::sha1;
+
+
+    // AES-128 Tests
+    #[test]
+    fn test_sha1() {
+        println!("{:?}", sha1::hash(b"hello world hello world hello world hello world hello world "));
     }
-    hash_to_vec(state)
 }

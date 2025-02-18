@@ -15,7 +15,7 @@ fn xtime(b: u8) -> u8 {
 // Finite field GF(2^8) multiplication of `a` and `b`
 fn gf_mul(mut a: u8, mut b: u8) -> u8 {
     let mut result: u8 = 0;
-    let mut i = 0;
+    let mut i = 0usize;
     while i < 8 {
         if b & 0x01 == 0x01 {
             result ^= a;
@@ -94,16 +94,25 @@ fn copy_initial_key(w: &mut Vec<u8>, key: &[u8], nk: usize) {
     }
 }
 
+fn expand_key_schedule_inner(w: &mut Vec<u8>, nk: usize, i: usize, temp: [u8; 4]) {
+    let prev_word = [
+        w[(i - nk) * 4],
+        w[(i - nk) * 4 + 1],
+        w[(i - nk) * 4 + 2],
+        w[(i - nk) * 4 + 3],
+    ];
+
+    w.push(temp[0] ^ prev_word[0]);
+    w.push(temp[1] ^ prev_word[1]);
+    w.push(temp[2] ^ prev_word[2]);
+    w.push(temp[3] ^ prev_word[3]);
+}
+
 // Expand the key schedule
 fn expand_key_schedule(w: &mut Vec<u8>, nk: usize, total_words: usize) {
     let mut i = nk;
     while i < total_words {
-        let mut temp = [
-            w[(i - 1) * 4],
-            w[(i - 1) * 4 + 1],
-            w[(i - 1) * 4 + 2],
-            w[(i - 1) * 4 + 3],
-        ];
+        let mut temp = [w[(i - 1) * 4], w[(i - 1) * 4 + 1], w[(i - 1) * 4 + 2], w[(i - 1) * 4 + 3]];
 
         if i % nk == 0 {
             temp = sub_word(&rot_word(&temp));
@@ -111,19 +120,8 @@ fn expand_key_schedule(w: &mut Vec<u8>, nk: usize, total_words: usize) {
         } else if nk > 6 && i % nk == 4 {
             temp = sub_word(&temp);
         }
-
-        let prev_word = [
-            w[(i - nk) * 4],
-            w[(i - nk) * 4 + 1],
-            w[(i - nk) * 4 + 2],
-            w[(i - nk) * 4 + 3],
-        ];
-
-        w.push(temp[0] ^ prev_word[0]);
-        w.push(temp[1] ^ prev_word[1]);
-        w.push(temp[2] ^ prev_word[2]);
-        w.push(temp[3] ^ prev_word[3]);
-
+        
+        expand_key_schedule_inner(w, nk, i, temp);
         i += 1;
     }
 }
@@ -174,16 +172,20 @@ fn inv_sub_bytes(state: &mut [u8]) {
 // Performs the ShiftRows transformation on a 16-byte AES state.
 fn shift_rows(state: &[u8; 16]) -> [u8; 16] {
     [
-        state[0], state[5], state[10], state[15], state[4], state[9], state[14], state[3],
-        state[8], state[13], state[2], state[7], state[12], state[1], state[6], state[11],
+        state[0],  state[5],  state[10], state[15],
+        state[4],  state[9],  state[14], state[3],
+        state[8],  state[13], state[2],  state[7],
+        state[12], state[1],  state[6],  state[11],
     ]
 }
 
 // Performs the Inverse ShiftRows transformation on a 16-byte AES state.
 fn inv_shift_rows(state: &[u8; 16]) -> [u8; 16] {
     [
-        state[0], state[13], state[10], state[7], state[4], state[1], state[14], state[11],
-        state[8], state[5], state[2], state[15], state[12], state[9], state[6], state[3],
+        state[0],  state[13], state[10], state[7],
+        state[4],  state[1],  state[14], state[11],
+        state[8],  state[5],  state[2],  state[15],
+        state[12], state[9],  state[6],  state[3],
     ]
 }
 
@@ -266,28 +268,14 @@ fn add_round_key(state: &[u8; 16], round_key: &[u8; 16]) -> [u8; 16] {
 // See https://aeneas-verif.zulipchat.com/#narrow/channel/349819-general/topic/Converting.20a.20Rust.20slice.20into.20an.20array.20fails
 fn extract_array_16(arr: &[u8], i: usize) -> [u8; 16] {
     [
-        arr[i + 0],
-        arr[i + 1],
-        arr[i + 2],
-        arr[i + 3],
-        arr[i + 4],
-        arr[i + 5],
-        arr[i + 6],
-        arr[i + 7],
-        arr[i + 8],
-        arr[i + 9],
-        arr[i + 10],
-        arr[i + 11],
-        arr[i + 12],
-        arr[i + 13],
-        arr[i + 14],
-        arr[i + 15],
+        arr[i + 0], arr[i + 1], arr[i + 2], arr[i + 3],
+        arr[i + 4], arr[i + 5], arr[i + 6], arr[i + 7],
+        arr[i + 8], arr[i + 9], arr[i + 10], arr[i + 11],
+        arr[i + 12], arr[i + 13], arr[i + 14], arr[i + 15],
     ]
 }
 
-// AES Cipher (encryption) function
-fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
-    let mut state = add_round_key(input, &extract_array_16(key_schedule, 0));
+fn cipher_loop(mut state: [u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     let mut round = 1;
 
     // Clone the key_schedule to work around Aeneas's lack of support for nested borrows.
@@ -300,6 +288,15 @@ fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
         round += 1;
     }
 
+    state
+}
+
+// AES Cipher (encryption) function
+fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
+    let mut state = add_round_key(input, &extract_array_16(key_schedule, 0));
+
+    state = cipher_loop(state, key_schedule, nr);
+
     sub_bytes(&mut state);
     state = shift_rows(&state);
     state = add_round_key(&state, &extract_array_16(key_schedule, nr * 16));
@@ -307,9 +304,7 @@ fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     state
 }
 
-// AES Inverse Cipher (decryption) function
-fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
-    let mut state = add_round_key(&input, &extract_array_16(key_schedule, nr * 16));
+fn inv_cipher_loop(mut state: [u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     let mut round_idx = 1;
 
     // Clone the key_schedule to work around Aeneas's lack of support for nested borrows.
@@ -322,6 +317,15 @@ fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
         state = inv_mix_columns(&state);
         round_idx += 1;
     }
+
+    state
+}
+
+// AES Inverse Cipher (decryption) function
+fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
+    let mut state = add_round_key(&input, &extract_array_16(key_schedule, nr * 16));
+
+    state = inv_cipher_loop(state, key_schedule, nr);
 
     state = inv_shift_rows(&state);
     inv_sub_bytes(&mut state);
@@ -378,10 +382,11 @@ pub fn aes256_inv(input: &[u8; 16], key: &[u8; 32]) -> [u8; 16] {
     inv_cipher(input, &key_schedule, nr)
 }
 
+
 #[cfg(test)]
 mod tests {
-    use crate::{aes128, aes128_inv, aes192, aes192_inv, aes256, aes256_inv};
     use hex;
+    use crate::{aes128, aes128_inv, aes192, aes192_inv, aes256, aes256_inv};
 
     // Helper function to convert a hex string to a fixed-size byte array.
     fn hex_to_bytes(hex: &str) -> Vec<u8> {
@@ -489,9 +494,7 @@ mod tests {
 
     #[test]
     fn test_aes256_ecbgfsbox256_0() {
-        let key = hex_to_fixed_array::<32>(
-            "0000000000000000000000000000000000000000000000000000000000000000",
-        );
+        let key = hex_to_fixed_array::<32>("0000000000000000000000000000000000000000000000000000000000000000");
         let plain = hex_to_fixed_array::<16>("014730f80ac625fe84f026c60bfd547d");
         let cipher = hex_to_fixed_array::<16>("5c9d844ed46f9885085e5d6a4f94c7d7");
 
@@ -502,9 +505,7 @@ mod tests {
 
     #[test]
     fn test_aes256_ecbkeysbox256_0() {
-        let key = hex_to_fixed_array::<32>(
-            "c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558",
-        );
+        let key = hex_to_fixed_array::<32>("c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558");
         let plain = hex_to_fixed_array::<16>("00000000000000000000000000000000");
         let cipher = hex_to_fixed_array::<16>("46f2fb342d6f0ab477476fc501242c5f");
 
@@ -515,9 +516,7 @@ mod tests {
 
     #[test]
     fn test_aes256_ecbvarkey256_0() {
-        let key = hex_to_fixed_array::<32>(
-            "8000000000000000000000000000000000000000000000000000000000000000",
-        );
+        let key = hex_to_fixed_array::<32>("8000000000000000000000000000000000000000000000000000000000000000");
         let plain = hex_to_fixed_array::<16>("00000000000000000000000000000000");
         let cipher = hex_to_fixed_array::<16>("e35a6dcb19b201a01ebcfa8aa22b5759");
 
@@ -528,9 +527,7 @@ mod tests {
 
     #[test]
     fn test_aes256_ecbvartxt256_0() {
-        let key = hex_to_fixed_array::<32>(
-            "0000000000000000000000000000000000000000000000000000000000000000",
-        );
+        let key = hex_to_fixed_array::<32>("0000000000000000000000000000000000000000000000000000000000000000");
         let plain = hex_to_fixed_array::<16>("80000000000000000000000000000000");
         let cipher = hex_to_fixed_array::<16>("ddc6bf790c15760d8d9aeb6f9a75fd4e");
 

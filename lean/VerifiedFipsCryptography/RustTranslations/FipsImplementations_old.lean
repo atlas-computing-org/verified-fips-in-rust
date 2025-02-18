@@ -1308,6 +1308,7 @@ divergent def algorithms.sha1.process_loop_loop
 
 /- [fips_implementations::algorithms::sha1::process_loop]:
    Source: 'src/algorithms/sha1.rs', lines 223:0-236:1 -/
+@[irreducible]
 def algorithms.sha1.process_loop
   (block : Array U8 64#usize) : Result (Array U32 16#usize) :=
   let words := Array.repeat 16#usize 0#u32
@@ -1315,6 +1316,7 @@ def algorithms.sha1.process_loop
 
 /- [fips_implementations::algorithms::sha1::process_rounds_0]:
    Source: 'src/algorithms/sha1.rs', lines 251:0-267:1 -/
+@[irreducible]
 def algorithms.sha1.process_rounds_0
   (h0 : algorithms.sha1.u32x4) (state : Array U32 5#usize)
   (words : Array U32 16#usize) :
@@ -1360,6 +1362,7 @@ def algorithms.sha1.process_rounds_0
 
 /- [fips_implementations::algorithms::sha1::process_rounds_i]:
    Source: 'src/algorithms/sha1.rs', lines 269:0-285:1 -/
+@[irreducible]
 def algorithms.sha1.process_rounds_i
   (args : (algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
   algorithms.sha1.u32x4 × algorithms.sha1.u32x4 × algorithms.sha1.u32x4 ×
@@ -1409,6 +1412,7 @@ def algorithms.sha1.process_rounds_i
 
 /- [fips_implementations::algorithms::sha1::process]:
    Source: 'src/algorithms/sha1.rs', lines 287:0-304:1 -/
+@[irreducible]
 def algorithms.sha1.process
   (state : Array U32 5#usize) (block : Array U8 64#usize) :
   Result (Array U32 5#usize)
@@ -1502,7 +1506,7 @@ def algorithms.sha1.pad_message_loop
   algorithms.sha1.pad_message_loop_loop padded_msg zero_padding_length 0#usize
 
 /- [fips_implementations::algorithms::sha1::pad_message]:
-   Source: 'src/algorithms/sha1.rs', lines 332:0-363:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 332:0-362:1 -/
 def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   do
   let i := Slice.len msg
@@ -1515,10 +1519,9 @@ def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   let padded_msg1 ←
     alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg msg
   let padded_msg2 ← alloc.vec.Vec.push padded_msg1 128#u8
-  let len := alloc.vec.Vec.len padded_msg2
-  let i5 ← len % 64#usize
-  let i6 ← 64#usize - i5
-  let i7 ← i6 + 56#usize
+  let i5 := alloc.vec.Vec.len padded_msg2
+  let i6 ← i5 % 64#usize
+  let i7 ← 56#usize - i6
   let zero_padding_length ← i7 % 64#usize
   let padded_msg3 ←
     algorithms.sha1.pad_message_loop padded_msg2 zero_padding_length
@@ -1544,7 +1547,7 @@ def algorithms.sha1.pad_message (msg : Slice U8) : Result (alloc.vec.Vec U8) :=
   alloc.vec.Vec.extend_from_slice core.clone.CloneU8 padded_msg3 s
 
 /- [fips_implementations::algorithms::sha1::hash_to_vec]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 368:4-376:5 -/
+   Source: 'src/algorithms/sha1.rs', lines 367:4-375:5 -/
 divergent def algorithms.sha1.hash_to_vec_loop
   (final_hash : Array U32 5#usize) (result_bytes : alloc.vec.Vec U8)
   (index : Usize) :
@@ -1574,13 +1577,13 @@ divergent def algorithms.sha1.hash_to_vec_loop
   else Result.ok result_bytes
 
 /- [fips_implementations::algorithms::sha1::hash_to_vec]:
-   Source: 'src/algorithms/sha1.rs', lines 365:0-378:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 364:0-377:1 -/
 def algorithms.sha1.hash_to_vec
   (final_hash : Array U32 5#usize) : Result (alloc.vec.Vec U8) :=
   algorithms.sha1.hash_to_vec_loop final_hash (alloc.vec.Vec.new U8) 0#usize
 
 /- [fips_implementations::algorithms::sha1::hash_loop]: loop 0:
-   Source: 'src/algorithms/sha1.rs', lines 382:4-386:5 -/
+   Source: 'src/algorithms/sha1.rs', lines 381:4-385:5 -/
 divergent def algorithms.sha1.hash_loop_loop
   (chunks : alloc.vec.Vec (Array U8 64#usize)) (state : Array U32 5#usize)
   (chunk_index : Usize) :
@@ -1599,7 +1602,7 @@ divergent def algorithms.sha1.hash_loop_loop
   else Result.ok state
 
 /- [fips_implementations::algorithms::sha1::hash_loop]:
-   Source: 'src/algorithms/sha1.rs', lines 380:0-387:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 379:0-386:1 -/
 def algorithms.sha1.hash_loop
   (chunks : alloc.vec.Vec (Array U8 64#usize)) (state : Array U32 5#usize) :
   Result (Array U32 5#usize)
@@ -1607,7 +1610,7 @@ def algorithms.sha1.hash_loop
   algorithms.sha1.hash_loop_loop chunks state 0#usize
 
 /- [fips_implementations::algorithms::sha1::hash]:
-   Source: 'src/algorithms/sha1.rs', lines 389:0-395:1 -/
+   Source: 'src/algorithms/sha1.rs', lines 388:0-394:1 -/
 def algorithms.sha1.hash (message : Slice U8) : Result (alloc.vec.Vec U8) :=
   do
   let padded_msg ← algorithms.sha1.pad_message message
