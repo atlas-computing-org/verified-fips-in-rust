@@ -38,7 +38,7 @@ lemma cipher :
   res_l = res_a :=
 by
   unfold Structured.cipher AES.cipher Structured.cipher_loop
-  simp [Id.run, Array.toArray_eq_extract, ← mix_columns]
+  simp [Id.run, ← mix_columns]
 
 lemma inv_cipher :
   let res_a := Structured.inv_cipher state
@@ -46,6 +46,6 @@ lemma inv_cipher :
   res_l = res_a :=
 by
   unfold Structured.inv_cipher AES.invCipher Structured.inv_cipher_loop
-  simp [Id.run, Array.toArray_eq_extract, ← inv_mix_columns]
+  simp [Id.run, ← inv_mix_columns]
 
 end StructuralEquiv

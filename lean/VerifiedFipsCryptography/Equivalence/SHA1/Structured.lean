@@ -34,10 +34,13 @@ def chunkify (msg : Array UInt8) : Array (Array UInt8) :=
 def bytes_to_word (bytes : Array UInt8) : UInt32 :=
   bytes.foldl (fun acc b => (acc <<< 8) ||| b.toUInt32) 0
 
-def process (h0 : Vector UInt32 5) (chunk : Array UInt8) :=
-  let words := List.range 16 |>.map fun i =>
+def process_loop (chunk : Array UInt8) :=
+  List.range 16 |>.map fun i =>
     let bytes := chunk.extract (i * 4) ((i + 1) * 4)
     bytes_to_word bytes
+
+def process (h0 : Vector UInt32 5) (chunk : Array UInt8) :=
+  let words := process_loop chunk
   let W := Id.run do
     let mut W := words
     for t in [16:80] do
@@ -93,6 +96,7 @@ def hash_loop (chunks : Array (Array UInt8)) (state : Vector UInt32 5) (i : Nat)
   (chunks.extract i chunks.size).foldl (init := state) fun state chunk =>
     process state chunk
 
+@[irreducible]
 def hash (message : Array UInt8) : Array UInt8 :=
   let paddedMsg := pad_message message
   let chunks := chunkify paddedMsg

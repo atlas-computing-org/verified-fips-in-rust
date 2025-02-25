@@ -36,6 +36,7 @@ def pad_message (msg : ByteArray) : ByteArray :=
   let padding : ByteArray := ByteArray.mk #[0x80]
   -- Step 3: Calculate zero-padding length
   let len := msg.size + 1
+  -- TODO: highlight this fix
   let zeroPaddingLength := (64 - len % 64 + 56) % 64
   -- Step 4: Append zero padding
   let zeroPadding := ByteArray.mk (List.replicate zeroPaddingLength 0).toArray

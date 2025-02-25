@@ -394,12 +394,14 @@ by
 def chunkify (msg : Array UInt8) (msg_size_dvd : 64 ∣ msg.size) : Array (Array UInt8) :=
   chunkify_loop msg msg_size_dvd #[] (by simp) 0 (Nat.dvd_zero 64)
 
+@[simp]
 lemma chunkify_sizes (msg_size_dvd : 64 ∣ msg.size) : ∀ chunk ∈ chunkify msg msg_size_dvd, chunk.size = 64 := fun chunk h ↦ by
   unfold chunkify at h
   conv at h => left; left; rw [← Nat.zero_mul 64]
   rw [chunkify_loop.eq_aux (by omega) msg_size_dvd] at h
   rw [mem_chunkify_loop_aux_size  (by omega) msg_size_dvd chunk h]
 
+@[simp]
 lemma chunkify_size (msg_size_dvd : 64 ∣ msg.size) : (chunkify msg msg_size_dvd).size = msg.size / 64 := by
   unfold chunkify
   conv => left; right; left; rw [← Nat.zero_mul 64]
@@ -459,13 +461,10 @@ lemma pad_message_size_dvd : 64 ∣ (pad_message msg).size := by
   interval_cases hmod : (x % 64) <;> simp <;> rw [Nat.dvd_iff_mod_eq_zero] <;> omega
 
 @[simp]
-lemma pad_message_size (msg_size : msg.size < USize.size - 64 - 1) : (pad_message msg).size < USize.size := by
+lemma pad_message_size (msg_size : msg.size < USize.size - 72 - 1) : (pad_message msg).size < USize.size := by
   unfold pad_message
   simp [-Nat.cast_add, -Nat.cast_one]
-  set x := msg.size + 1
-  have hx : x % 64 ≤ 64 := le_of_lt (Nat.mod_lt x (Nat.zero_lt_succ 63))
-  -- The rest of this proof can be a case grind, there might be a smarter way to do it, but I'll just leave it as this.
-  interval_cases hmod : (x % 64) <;> sorry
+  omega
 
 @[irreducible]
 def hash_to_vec_loop
@@ -519,6 +518,7 @@ def hash_loop
   else
     state
 
+@[simp]
 lemma hash_loop_size (i_size : i ≤ chunks.size) : (hash_loop chunks chunk_sizes state state_size i).size = 5 := by
   induction i_size using Nat.decreasingInduction generalizing state with
   | self => unfold hash_loop; simpa
@@ -533,3 +533,8 @@ def hash (message : Array UInt8) : Array UInt8 :=
   have chunk_sizes := chunkify_sizes pad_message_size_dvd
   let state := hash_loop chunks chunk_sizes INITIAL_STATE rfl 0
   hash_to_vec state (hash_loop_size (Nat.zero_le _))
+
+@[simp]
+lemma hash_size : (hash message).size < USize.size := by
+  simp [hash]
+  exact Nat.lt_usize (by omega)

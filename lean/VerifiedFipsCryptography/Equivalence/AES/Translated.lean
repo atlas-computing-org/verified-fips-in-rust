@@ -39,6 +39,9 @@ def rot_word (word : Array UInt8) (word_size : word.size = 4) : Array UInt8 :=
   let w3 := word[3]
   #[w1, w2, w3, w0]
 
+@[simp]
+lemma rot_word_size : (rot_word word word_size).size = 4 := by rfl
+
 set_option maxRecDepth 10000
 def sub_word (word : Array UInt8) (word_size : word.size = 4) : Array UInt8 :=
   let w0 := word[0]
@@ -54,6 +57,9 @@ def sub_word (word : Array UInt8) (word_size : word.size = 4) : Array UInt8 :=
   have h3 : w3.toNat < AES.sBox.size := by simp [w3.toNat_lt_size]
   let w3 := AES.sBox[w3.toNat]
   #[w0, w1, w2, w3]
+
+@[simp]
+lemma sub_word_size : (sub_word word word_size).size = 4 := by rfl
 
 def copy_initial_key_loop (w key : Array UInt8) (nk i : Nat) : Array UInt8 :=
   if i < nk then
@@ -137,7 +143,7 @@ def expand_key_schedule_loop (w : Array UInt8) (nk total_words i : Nat) :
       let temp := #[temp0, temp1, temp2, temp3]
       let temp := sub_word (rot_word temp rfl) rfl
       let temp := temp.set! 0 (temp[0]! ^^^ AES.rcon[(i / nk) - 1]!) -- FIXME: bounds
-      have temp_size : temp.size = 4 := by rename_i temp₀ temp₁; simp [temp, temp₁, temp₀]; rfl
+      have temp_size : temp.size = 4 := by rename_i temp₀ temp₁; simp [temp, temp₁, temp₀];
       let w := expand_key_schedule_inner w nk i temp temp_size
       expand_key_schedule_loop w nk total_words (i + 1)
     else if nk > 6 then
@@ -184,7 +190,7 @@ def key_expansion (key : Array UInt8) (nk nr : Nat) : Array UInt8 :=
   expand_key_schedule w nk total_words
 
 @[simp]
-lemma key_expansion_size {h : nk < nr} {key_size : key.size = nk * 4} : (key_expansion key nk nr).size = (nr + 1) * 16 := by
+lemma key_expansion_size (h : nk < nr) (key_size : key.size = nk * 4) : (key_expansion key nk nr).size = (nr + 1) * 16 := by
   simp [key_expansion, key_size, mul_comm 4 _]; omega
 
 def sub_bytes (state : Array UInt8) : Array UInt8 :=
@@ -195,6 +201,7 @@ lemma sub_bytes_size : (sub_bytes state).size = state.size := by simp [sub_bytes
 
 def inv_sub_bytes (state : Array UInt8) : Array UInt8 :=
   state.map (fun byte => AES.invSBox[byte.toNat]!)
+
 @[simp]
 lemma inv_sub_bytes_size : (inv_sub_bytes state).size = state.size := by simp [inv_sub_bytes]
 
@@ -446,31 +453,6 @@ lemma cipher_loop_loop_size {round : Nat} : (cipher_loop_loop state key_schedule
       have hn : nr - round = 0 := by omega
       simp [cipher_loop_loop, hi, hn, state_size]
 
--- def cipher_loop_loop.loop_form (state key_schedule : Array UInt8) (nr round : Nat)
---     (state_size : state.size = 16) (key_schedule_size : key_schedule.size = (nr + 1) * 16) : Array UInt8 :=
---   Aeneas.loop_form state nr round fun state round ↦
---     let state := sub_bytes state
---     let state := shift_rows state sorry
---     let state := mix_columns state sorry
---     let round_key := key_schedule.extract (round * 16) ((round + 1) * 16)
---     let state := add_round_key state round_key sorry sorry
---     state
-
--- lemma cipher_loop_loop.loop_form_eq : cipher_loop_loop.loop_form = cipher_loop_loop := by
---   funext state key_schedule nr round state_size
---   unfold loop_form
---   by_cases hi : round ≤  nr
---   · induction hi using Nat.decreasingInduction generalizing state with
---     | self => simp [Aeneas.loop_form, cipher_loop_loop]
---     | of_succ i hi ih =>
---       unfold Aeneas.loop_form cipher_loop_loop
---       simp [hi, range'_eq_cons, ← ih _]
---   · by_cases hi : round = nr
---     · simp [Aeneas.loop_form, cipher_loop_loop, hi]
---     · have hi : ¬round < nr := by linarith
---       have hn : nr - round = 0 := by omega
---       simp [Aeneas.loop_form, cipher_loop_loop, hi, hn]
-
 def cipher_loop (state key_schedule : Array UInt8) (nr : Nat)
     (state_size : state.size = 16) (key_schedule_size : key_schedule.size = (nr + 1) * 16) :=
   cipher_loop_loop state key_schedule nr 1 state_size key_schedule_size
@@ -487,6 +469,10 @@ def cipher (state key_schedule : Array UInt8) (nr : Nat)
   let state3 := shift_rows state2 (by simp [state2, state1])
   let round_key := key_schedule.extract (nr * 16) ((nr + 1) * 16)
   add_round_key state3 round_key (by simp [state3]) (key_schedule_extract_size key_schedule_size)
+
+@[simp]
+lemma cipher_size : (cipher state key_schedule nr state_size key_schedule_size).size = 16 := by
+  simp [cipher]
 
 def inv_cipher_loop_loop (state key_schedule : Array UInt8) (nr round_idx : Nat)
     (state_size : state.size = 16) (key_schedule_size : key_schedule.size = (nr + 1) * 16) : Array UInt8 :=
@@ -516,32 +502,6 @@ lemma inv_cipher_loop_loop_size {round : Nat} : (inv_cipher_loop_loop state key_
       have hn : nr - round = 0 := by omega
       simp [inv_cipher_loop_loop, hi, hn, state_size]
 
--- def inv_cipher_loop_loop.loop_form (state key_schedule : Array UInt8) (nr round_idx : Nat)
---     (state_size : state.size = 16) (key_schedule_size : key_schedule.size = (nr + 1) * 16) : Array UInt8 :=
---   Aeneas.loop_form state nr round_idx fun state round_idx ↦
---     let round := nr - round_idx
---     let state := inv_shift_rows state sorry
---     let state := inv_sub_bytes state
---     let round_key := key_schedule.extract (round * 16) ((round + 1) * 16)
---     let state := add_round_key state round_key sorry (key_schedule_extract_size key_schedule_size)
---     let state := inv_mix_columns state sorry
---     state
-
--- lemma inv_cipher_loop_loop.loop_form_eq : inv_cipher_loop_loop.loop_form = inv_cipher_loop_loop := by
---   funext state key_schedule nr round_idx state_size
---   unfold loop_form
---   by_cases hi : round_idx ≤  nr
---   · induction hi using Nat.decreasingInduction generalizing state with
---     | self => simp [Aeneas.loop_form, inv_cipher_loop_loop]
---     | of_succ i hi ih =>
---       unfold Aeneas.loop_form inv_cipher_loop_loop
---       simp [hi, range'_eq_cons, ← ih _]
---   · by_cases hi : round_idx = nr
---     · simp [Aeneas.loop_form, inv_cipher_loop_loop, hi]
---     · have hi : ¬round_idx < nr := by linarith
---       have hn : nr - round_idx = 0 := by omega
---       simp [Aeneas.loop_form, inv_cipher_loop_loop, hi, hn]
-
 def inv_cipher_loop (state key_schedule : Array UInt8) (nr : Nat)
     (state_size : state.size = 16) (key_schedule_size : key_schedule.size = (nr + 1) * 16) : Array UInt8 :=
   inv_cipher_loop_loop state key_schedule nr 1 state_size key_schedule_size
@@ -560,29 +520,63 @@ def inv_cipher (state key_schedule : Array UInt8) (nr : Nat)
   let round_key := key_schedule.extract 0 16
   add_round_key state3 round_key (by simp [state3, state2]) (key_schedule_extract_size₀ key_schedule_size)
 
+@[simp]
+lemma inv_cipher_size : (inv_cipher state key_schedule nr state_size key_schedule_size).size = 16 := by
+  simp [inv_cipher]
+
+@[irreducible]
 def aes128 (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 16) : Array UInt8 :=
   let key_schedule := key_expansion key 4 10
   cipher input key_schedule 10 input_size (by simp [key_schedule, key_size])
 
+@[simp]
+lemma aes128_size : (aes128 input key input_size key_size).size = 16 := by
+  simp [aes128]
+
+@[irreducible]
 def aes192 (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 24) : Array UInt8 :=
   let key_schedule := key_expansion key 6 12
   cipher input key_schedule 12 input_size (by simp [key_schedule, key_size])
 
+@[simp]
+lemma aes192_size : (aes192 input key input_size key_size).size = 16 := by
+  simp [aes192]
+
+@[irreducible]
 def aes256 (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 32) : Array UInt8 :=
   let key_schedule := key_expansion key 8 14
   cipher input key_schedule 14 input_size (by simp [key_schedule, key_size])
 
+@[simp]
+lemma aes256_size : (aes256 input key input_size key_size).size = 16 := by
+  simp [aes256]
+
+@[irreducible]
 def aes128_inv (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 16) : Array UInt8 :=
   let key_schedule := key_expansion key 4 10
   inv_cipher input key_schedule 10 input_size (by simp [key_schedule, key_size])
 
+@[simp]
+lemma aes128_inv_size : (aes128_inv input key input_size key_size).size = 16 := by
+  simp [aes128_inv]
+
+@[irreducible]
 def aes192_inv (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 24) : Array UInt8 :=
   let key_schedule := key_expansion key 6 12
   inv_cipher input key_schedule 12 input_size (by simp [key_schedule, key_size])
 
+@[simp]
+lemma aes192_inv_size : (aes192_inv input key input_size key_size).size = 16 := by
+  simp [aes192_inv]
+
+@[irreducible]
 def aes256_inv (input : Array UInt8) (key : Array UInt8) (input_size : input.size = 16) (key_size : key.size = 32) : Array UInt8 :=
   let key_schedule := key_expansion key 8 14
   inv_cipher input key_schedule 14 input_size (by simp [key_schedule, key_size])
+
+@[simp]
+lemma aes256_inv_size : (aes256_inv input key input_size key_size).size = 16 := by
+  simp [aes256_inv]
 
 
 

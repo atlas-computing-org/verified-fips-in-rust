@@ -216,7 +216,7 @@ by
   simp [col_size, gf_mul, StructuralEquiv.gf_mul, Array.get!_eq_get]
 
 lemma mix_columns_loop :
-  let res_l := Structured.mix_columns_loop state result[0:(4 * i)].toArray i
+  let res_l := Structured.mix_columns_loop state (result.extract 0 (4 * i)) i
   let res_t := Translated.mix_columns_loop state result i state_size result_size
   res_t = res_l :=
 by
@@ -235,7 +235,7 @@ by
       let result3 := result2.set! (4 * i + 3) mixed[3]!;
       have result3_size : result3.size = 16 := by simp [result3, result2, result1, result0, Array.size_set!, result_size]
       have ih := @ih result3 result3_size
-      have : ((result.toSubarray 0 (4 * i)).toArray ++ mixed) = (result3.toSubarray 0 (4 * (i + 1))).toArray := by
+      have : (result.extract 0 (4 * i) ++ mixed) = result3.extract 0 (4 * (i + 1)) := by
         -- Need more lemmas to reason about Array/Subarray + push/set!.
         sorry
       simp [hi, range'_eq_cons] at ih ⊢
@@ -246,7 +246,7 @@ by
     · have hi : ¬i < 4 := by linarith
       have hn : 4 - i = 0 := by omega
       have hle : result.size ≤ (4 * i) := by omega
-      simp [Aeneas.loop_form, mix_columns_loop, hi, Subarray.toArray_eq_self _ hle, hn]
+      simp [Aeneas.loop_form, mix_columns_loop, Array.extract_all' _ hle, hi, hn]
 
 lemma mix_columns :
   let res_l := Structured.mix_columns state
@@ -257,7 +257,7 @@ by
   simp [state_size, mix_columns_loop, Id.run]
 
 lemma inv_mix_columns_loop :
-  let res_l := Structured.inv_mix_columns_loop state result[0:(4 * i)].toArray i
+  let res_l := Structured.inv_mix_columns_loop state (result.extract 0 (4 * i)) i
   let res_t := Translated.inv_mix_columns_loop state result i state_size result_size
   res_t = res_l :=
 by
@@ -276,7 +276,7 @@ by
       let result3 := result2.set! (4 * i + 3) mixed[3]!;
       have result3_size : result3.size = 16 := by simp [result3, result2, result1, result0, Array.size_set!, result_size]
       have ih := @ih result3 result3_size
-      have : ((result.toSubarray 0 (4 * i)).toArray ++ mixed) = (result3.toSubarray 0 (4 * (i + 1))).toArray := by
+      have : (result.extract 0 (4 * i) ++ mixed) = result3.extract 0 (4 * (i + 1)) := by
         -- Need more lemmas to reason about Array/Subarray + push/set!.
         sorry
       simp [hi, range'_eq_cons] at ih ⊢
@@ -287,7 +287,7 @@ by
     · have hi : ¬i < 4 := by linarith
       have hn : 4 - i = 0 := by omega
       have hle : result.size ≤ (4 * i) := by omega
-      simp [Aeneas.loop_form, mix_columns_loop, hi, Subarray.toArray_eq_self _ hle, hn]
+      simp [Aeneas.loop_form, mix_columns_loop, Array.extract_all' _ hle, hi, hn]
 
 lemma inv_mix_columns :
   let res_l := Structured.inv_mix_columns state
@@ -407,7 +407,6 @@ by
   rw [← @add_round_key input _ input_size (Translated.key_schedule_extract_size key_schedule_size)]
   rw [add_round_key, inv_sub_bytes, inv_shift_rows, inv_cipher_loop]
 
-set_option diagnostics true in
 lemma aes128 :
   let res_l := AES.AES128 input key
   let res_t := Translated.aes128 input key input_size key_size

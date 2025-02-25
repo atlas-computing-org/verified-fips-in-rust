@@ -167,7 +167,7 @@ by
   ]
   rw [U8.ofUInt8_eq 0 0]
   -- An example of why `simp` is not strong enough. Doing this doesn't work:
-  -- `simp [Array.toArrayU32.index_usize_spec _ _ _ _. u32x4.toU32x4_unapply]`
+  -- simp [Array.toArrayU32.index_usize_spec _ _ _ (by omega), u32x4.toU32x4_unapply]
   -- because `simp` can't pattern match on the last bounds proof.
   rw [Array.toArrayU32.index_usize_spec _ _ _ (by omega), bind_tc_ok]
   rw [Array.toArrayU32.index_usize_spec _ _ _ (by omega), bind_tc_ok]
@@ -226,6 +226,7 @@ by
     simp [hi, this] at ih ⊢
     rw [Usize.ofNat_eq 4 4, Usize.ofNat_eq 3 3, Usize.ofNat_eq 2 2, Usize.ofNat_eq 1 1]
     rw [U32.ofUInt32_eq 8 8, U32.ofUInt32_eq 16 16, U32.ofUInt32_eq 24 24]
+    -- These are all simple bounds `sorry`s.
     simp [Usize.mul_spec sorry, Usize.add_spec sorry, Array.toArrayU8.index_usize_spec _ _ _ sorry, Array.index_mut_usize,
       Array.toArrayU32.index_usize_spec _ _ _ sorry, Array.toArrayU32.update_spec words _ i (by omega) _]
     rw [← ih]
@@ -242,6 +243,7 @@ lemma process_loop :
   res_r = .ok (res_t.toArrayU32 process_loop_size) :=
 by
   unfold Translated.process_loop sha1.process_loop
+  -- This `sorry` is a bit difficult due to Aeneas types, but is obviously true.
   have : Array.repeat 16#usize 0#u32 = (Array.mk $ List.replicate 16 0 ).toArrayU32 := by sorry
   rw [this, Usize.ofNat_eq 0 0, process_loop_loop]
   simp
@@ -257,6 +259,7 @@ lemma process :
   let res_r := sha1.process state.toArrayU32 block.toArrayU8
   res_r = .ok (res_t.toArrayU32 process_size) :=
 by
+  -- These are all simple bounds `sorry`s.
   rw [sha1.process, Usize.ofNat_eq 0 0, Usize.ofNat_eq 1 1, Usize.ofNat_eq 2 2, Usize.ofNat_eq 3 3, Usize.ofNat_eq 4 4]
   rw [U8.ofUInt8_eq 1 1, U8.ofUInt8_eq 2 2, U8.ofUInt8_eq 3 3, U32.ofUInt32_eq 30 30]
   simp [@process_loop _ block_size, Array.toArrayU32.index_usize_spec _ _ _ sorry, u32x4.toU32x4_unapply]
@@ -283,10 +286,16 @@ lemma CHUNK_SIZE : sha1.CHUNK_SIZE = (64).toUsize := by
   rw [Usize.ofNat_eq 64 64]
 
 @[simp]
-lemma chunkify_loop.eq_aux (msg_size : msg.size < USize.size) (msg_size_dvd : 64 ∣ msg.size) (i_size : i * 64 < USize.size) :
+lemma chunkify_loop_aux_size (msg_size : msg.size < USize.size)  (i_size : i * 64 ≤ msg.size) (chunks_size : chunks.size = i) : (Translated.chunkify_loop_aux msg msg_size_dvd chunks chunk_sizes i).size < USize.size := by
+  rw [Translated.chunkify_loop_aux_size i_size]
+  simp [chunks_size]
+  omega
+
+@[simp]
+lemma chunkify_loop.eq_aux (msg_size : msg.size < USize.size) (msg_size_dvd : 64 ∣ msg.size) (chunks_size : chunks.size = i) (i_size : i * 64 ≤ msg.size) :
   let res_t := Translated.chunkify_loop_aux msg msg_size_dvd chunks chunk_sizes i
-  let res_r := sha1.chunkify_loop (msg.toVecU8 msg_size) (chunks.toVecArrayU8 sorry) (i * 64).toUsize
-  res_r = .ok (res_t.toVecArrayU8 sorry) :=
+  let res_r := sha1.chunkify_loop (msg.toVecU8 msg_size) (chunks.toVecArrayU8 (by omega)) (i * 64).toUsize
+  res_r = .ok (res_t.toVecArrayU8 (chunkify_loop_aux_size msg_size i_size chunks_size)) :=
 by
   have : ∀ i, i * 64 < USize.size → ((i * 64).toUsize < msg.size.toUsize ↔ i * 64 < msg.size) := fun i hi ↦ by
     simp [Nat.toUsize, USize.toUsize, USize.size] at *; norm_cast
@@ -295,67 +304,80 @@ by
   by_cases hi : i ≤ msg.size / 64
   · induction hi using Nat.decreasingInduction generalizing chunks with
     | self =>
-      unfold Translated.chunkify_loop_aux; rw [sha1.chunkify_loop]
+      rw [sha1.chunkify_loop]
       simp [Nat.coe_toUsize_of_le, h0]
+      unfold Translated.chunkify_loop_aux; simp [h0]
     | of_succ i hi ih =>
-      unfold Translated.chunkify_loop_aux; rw [sha1.chunkify_loop]
+      rw [sha1.chunkify_loop]
       have hi : i * 64 < msg.size := by linarith
-      simp [hi, this i i_size] at ih ⊢
+      simp [hi, this i (by omega)] at ih ⊢
+      -- This is a simple bounds `sorry`.
       simp [slice.index.Slice.index, Usize.add_spec sorry]
+      unfold Translated.chunkify_loop_aux; simp [hi]
+      -- This `sorry` is hard to fill because many Aeneas types like
+      -- `slice.index.SliceIndexRangeUsizeSliceTInst` and `slice.Slice.copy_from_slice` don't have definitions yet.
+      -- But the statement is essentially true.
       sorry
   · by_cases hi : i = msg.size / 64
     · rw [sha1.chunkify_loop];
-      simp_rw [Array.toVecU8_slice_len, this i i_size]
+      simp_rw [Array.toVecU8_slice_len, this i (by omega)]
       simp [Translated.chunkify_loop_aux, h0, hi]
     · have hi : ¬i * 64 < msg.size := by linarith
       have hn : msg.size / 64 - i = 0 := by omega
       rw [sha1.chunkify_loop]
-      simp_rw [Array.toVecU8_slice_len, this i i_size]
+      simp_rw [Array.toVecU8_slice_len, this i (by omega)]
       simp [hi, hn, Translated.chunkify_loop_aux, h0]
 
 @[simp]
 lemma chunkify (msg_size : msg.size < USize.size) (msg_size_dvd : 64 ∣ msg.size) :
   let res_t := Translated.chunkify msg msg_size_dvd
   let res_r := sha1.chunkify (msg.toVecU8 msg_size)
-  res_r = .ok (res_t.toVecArrayU8 sorry) :=
+  res_r = .ok (res_t.toVecArrayU8 (by rw [Translated.chunkify_size]; omega)) :=
 by
-  rw [Translated.chunkify, sha1.chunkify, Usize.ofNat_eq 0 0, Vec.ArrayU8.new_spec]
+  rw [sha1.chunkify, Usize.ofNat_eq 0 0, Vec.ArrayU8.new_spec]; unfold Translated.chunkify
   dsimp; conv => left; right; rw [← Nat.zero_mul 64]
-  rw [chunkify_loop.eq_aux (chunk_sizes := by simp) msg_size msg_size_dvd (by omega), ← Translated.chunkify_loop.eq_aux (Nat.zero_le _)]
+  rw [chunkify_loop.eq_aux (chunk_sizes := by simp) msg_size msg_size_dvd (by simp) (by omega)]
+  congr
+  rw [← Translated.chunkify_loop.eq_aux (Nat.zero_le _)]
+
+lemma pad_message_loop_size_aux {padded_msg : _root_.Array UInt8} (padded_msg_size : padded_msg.size < USize.size - 64 + i) (i_size : i ≤ zero_padding_length) (zero_padding_length_size : zero_padding_length < 64) :
+  padded_msg.size < USize.size :=
+by
+  have : i < 64 := by omega
+  refine lt_trans padded_msg_size ?_
+  cases System.Platform.numBits_eq <;> simp_all [USize.size] <;> omega
+
+lemma pad_message_loop_size_aux' (padded_msg_size : padded_msg.size < USize.size - 64 + i) (i_size : i ≤ zero_padding_length) (zero_padding_length_size : zero_padding_length < 64) :
+  (Translated.pad_message_loop padded_msg zero_padding_length i).size < USize.size :=
+by
+  rw [Translated.pad_message_loop_size i_size]
+  cases System.Platform.numBits_eq <;> simp_all [USize.size] <;> omega
 
 @[simp]
-lemma pad_message_loop (padded_msg_size : padded_msg.size < USize.size - 64 + i) (i_size : i < USize.size) (zero_padding_length_size : zero_padding_length < 64) :
+lemma pad_message_loop (padded_msg_size : padded_msg.size < USize.size - 64 + i) (i_size : i ≤ zero_padding_length) (zero_padding_length_size : zero_padding_length < 64) :
   let res_t := Translated.pad_message_loop padded_msg zero_padding_length i
-  let res_r := sha1.pad_message_loop_loop (padded_msg.toVecU8 sorry) zero_padding_length.toUsize i.toUsize
-  res_r = .ok (res_t.toVecU8 sorry) :=
+  let res_r := sha1.pad_message_loop_loop (padded_msg.toVecU8 (pad_message_loop_size_aux padded_msg_size i_size zero_padding_length_size)) zero_padding_length.toUsize i.toUsize
+  res_r = .ok (res_t.toVecU8 (pad_message_loop_size_aux' padded_msg_size i_size zero_padding_length_size)) :=
 by
   have : ∀ i < USize.size, i.toUsize < zero_padding_length.toUsize ↔ i < zero_padding_length := fun i hi ↦ by
     simp [Nat.toUsize, USize.toUsize, USize.size] at *; norm_cast
     have : zero_padding_length < USize.size := Nat.lt_usize (by omega)
     rw [Nat.mod_eq_of_lt hi, Nat.mod_eq_of_lt this]
-  by_cases hi : i ≤ zero_padding_length
-  · induction hi using Nat.decreasingInduction generalizing padded_msg with
-    | self =>
-      unfold Translated.pad_message_loop; rw [sha1.pad_message_loop_loop]
-      simp [Nat.coe_toUsize_of_le]
-    | of_succ i hi ih =>
-      unfold Translated.pad_message_loop; rw [sha1.pad_message_loop_loop]
-      simp [hi, this i i_size] at ih ⊢
-      rw [Usize.ofNat_eq 1 1, U8.ofUInt8_eq 0 0]
-      have h₁ : i + 1 < USize.size := Nat.lt_usize (by omega)
-      rw [Array.toVecU8.push_spec _ _ (by omega), bind_tc_ok, Usize.add_spec h₁, bind_tc_ok, ← ih (by simp; omega) h₁]
-  · by_cases hi : i = zero_padding_length
-    · rw [sha1.pad_message_loop_loop]
-      simp_rw [this i i_size]
-      simp [Translated.pad_message_loop, hi]
-    · have hi : ¬i < zero_padding_length := by linarith
-      have hn : zero_padding_length - i = 0 := by omega
-      rw [sha1.pad_message_loop_loop]
-      simp_rw [this i i_size]
-      simp [hi, hn, Translated.pad_message_loop]
+  induction i_size using Nat.decreasingInduction generalizing padded_msg with
+  | self =>
+    rw [sha1.pad_message_loop_loop]
+    simp [Nat.coe_toUsize_of_le]
+    unfold Translated.pad_message_loop; simp
+  | of_succ i hi ih =>
+    rw [sha1.pad_message_loop_loop]
+    simp [hi, this i (Nat.lt_usize (by omega))] at ih ⊢
+    rw [Usize.ofNat_eq 1 1, U8.ofUInt8_eq 0 0]
+    have h₁ : i + 1 < USize.size := Nat.lt_usize (by omega)
+    unfold Translated.pad_message_loop; simp [hi]
+    rw [Array.toVecU8.push_spec _ _ (by omega), bind_tc_ok, Usize.add_spec h₁, bind_tc_ok, ← ih (by simp; omega)]
 
 @[simp]
-lemma pad_message (msg_size : msg.size < USize.size - 64 - 1) :
+lemma pad_message (msg_size : msg.size < USize.size - 72 - 1) :
   let res_t := Translated.pad_message msg
   let res_r := sha1.pad_message (msg.toVecU8 (lt_trans msg_size (by omega)))
   res_r = .ok (res_t.toVecU8 (Translated.pad_message_size msg_size)) :=
@@ -364,6 +386,7 @@ by
   rw [Usize.ofNat_eq 1 1, Usize.ofNat_eq 64 64, Usize.ofNat_eq 56 56]
   rw [U64.ofUInt64_eq 56 56, U64.ofUInt64_eq 48 48, U64.ofUInt64_eq 40 40, U64.ofUInt64_eq 32 32, U64.ofUInt64_eq 24 24, U64.ofUInt64_eq 16 16, U64.ofUInt64_eq 8 8, U64.ofUInt64_eq 0 0, U64.ofUInt64_eq 255 255]
   rw [U8.ofUInt8_eq 128 128]
+  -- These are all simple bounds `sorry`s.
   simp [Usize.add_spec sorry, Nat.Usize.sub_spec sorry, Array.toVecU8.push_spec _ _ sorry, UInt64.U64.mul_spec sorry, Vec.U8.extend_from_slice_spec sorry]
   rw [sha1.pad_message_loop, Usize.ofNat_eq 0 0, pad_message_loop (by simp; omega) (by simp) (by omega)]
   simp [Vec.U8.extend_from_slice_spec sorry]
@@ -394,6 +417,7 @@ by
       have h1 : final_hash.size < USize.size := Nat.lt_usize (by omega)
       rw [Nat.mod_eq_of_lt h0, Nat.mod_eq_of_lt h1]
     simp [hi, this] at ih ⊢
+    -- These are all simple bounds `sorry`s.
     rw [Usize.ofNat_eq 1 1, U32.ofUInt32_eq 0 0, U32.ofUInt32_eq 8 8, U32.ofUInt32_eq 16 16, U32.ofUInt32_eq 24 24, U32.ofUInt32_eq 255 255]
     simp [Array.toArrayU32.index_usize_spec _ _ _ sorry, Array.toVecU8.push_spec _ _ sorry, Usize.add_spec sorry]
     unfold Translated.hash_to_vec_loop; rw [ih (by simp; omega)]
@@ -420,46 +444,41 @@ lemma INITIAL_STATE : sha1.INITIAL_STATE = Translated.INITIAL_STATE.toArrayU32 (
   rw [U32.ofUInt32_eq 1732584193 1732584193, U32.ofUInt32_eq 4023233417 4023233417, U32.ofUInt32_eq 2562383102 2562383102, U32.ofUInt32_eq 271733878 271733878, U32.ofUInt32_eq 3285377520 3285377520]
 
 @[simp]
-lemma hash_loop (chunks_size : chunks.size < USize.size) (index_size : index < USize.size) :
+lemma hash_loop (chunks_size : chunks.size < USize.size) (i_size : index ≤ chunks.size) :
   let res_t := Translated.hash_loop chunks chunk_sizes state state_size index
   let res_r := sha1.hash_loop_loop (chunks.toVecArrayU8 chunks_size) state.toArrayU32 index.toUsize
-  res_r = .ok (res_t.toArrayU32 sorry) :=
+  res_r = .ok (res_t.toArrayU32 (by simp [res_t]; exact Translated.hash_loop_size i_size)) :=
 by
   have : ∀ i < USize.size, i.toUsize < chunks.size.toUsize ↔ i < chunks.size := fun i hi ↦ by
     simp [Nat.toUsize, USize.toUsize, USize.size] at *; norm_cast
     rw [Nat.mod_eq_of_lt hi, Nat.mod_eq_of_lt chunks_size]
-  by_cases hi : index ≤ chunks.size
-  · induction hi using Nat.decreasingInduction generalizing state with
-    | self =>
-      unfold Translated.hash_loop; rw [sha1.hash_loop_loop]
-      simp
-    | of_succ index hi ih =>
-      unfold Translated.hash_loop; rw [sha1.hash_loop_loop]
-      simp [hi, this index index_size] at ih ⊢
-      rw [Usize.ofNat_eq 1 1]
-      simp [Array.toVecArrayU8.index_usize_spec _ _ _ sorry, Array.toVecU8.push_spec _ _ sorry, Usize.add_spec sorry,
-        @process state state_size chunks[index] (chunk_sizes _ (Array.getElem_mem _))]
-      rw [← ih (by omega)]
-  · by_cases hi : index = chunks.size
-    · rw [sha1.hash_loop_loop]
-      simp_rw [Array.toVecArrayU8_len, this index index_size]
-      simp [Translated.hash_loop, hi]
-    · have hi : ¬index < chunks.size := by linarith
-      have hn : chunks.size - index = 0 := by omega
-      rw [sha1.hash_loop_loop]
-      simp_rw [Array.toVecArrayU8_len, this index index_size]
-      simp [hi, hn, Translated.hash_loop]
+  induction i_size using Nat.decreasingInduction generalizing state with
+  | self =>
+    rw [sha1.hash_loop_loop]; simp
+    unfold Translated.hash_loop; simp
+  | of_succ index hi ih =>
+    rw [sha1.hash_loop_loop]
+    simp [hi, this index (by omega)] at ih ⊢
+    rw [Usize.ofNat_eq 1 1]
+    -- These are all simple bounds `sorry`s.
+    simp [Array.toVecArrayU8.index_usize_spec _ _ _ sorry, Array.toVecU8.push_spec _ _ sorry, Usize.add_spec sorry,
+      @process state state_size chunks[index] (chunk_sizes _ (Array.getElem_mem _))]
+    unfold Translated.hash_loop; simp [hi]
+    rw [← ih]
 
 @[simp]
-lemma hash (msg_size : msg.size < USize.size - 64 - 1) :
+lemma hash (msg_size : msg.size < USize.size - 72 - 1) :
   let res_t := Translated.hash msg
   let res_r := sha1.hash (msg.toVecU8 (lt_trans msg_size (by omega)))
-  res_r = .ok (res_t.toVecU8 sorry) :=
+  res_r = .ok (res_t.toVecU8 (by simp [res_t])) :=
 by
-  rw [Translated.hash, sha1.hash]
+  rw [sha1.hash]; unfold Translated.hash
   simp [DerefVec.deref]
-  -- have h0 : msg.size < USize.size := lt_trans msg_size (by omega)
   simp [pad_message msg_size, chunkify _ Translated.pad_message_size_dvd, sha1.hash_loop, Usize.ofNat_eq 0 0]
-  rw [hash_loop (chunk_sizes := Translated.chunkify_sizes Translated.pad_message_size_dvd) (state_size := by rfl) sorry (by simp), bind_tc_ok, hash_to_vec]
+  have chunkify_size : (Translated.chunkify (Translated.pad_message msg) Translated.pad_message_size_dvd).size < USize.size := by
+    have := Translated.pad_message_size msg_size
+    rw [Translated.chunkify_size]
+    omega
+  rw [hash_loop (chunk_sizes := Translated.chunkify_sizes Translated.pad_message_size_dvd) (state_size := by rfl) chunkify_size (by simp), bind_tc_ok, hash_to_vec]
 
 end TypeEquiv

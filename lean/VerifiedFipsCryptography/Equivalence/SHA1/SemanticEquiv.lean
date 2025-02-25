@@ -1,7 +1,6 @@
 import VerifiedFipsCryptography.Specs.SHA1
 import VerifiedFipsCryptography.Equivalence.SHA1.Translated
 import VerifiedFipsCryptography.Equivalence.SHA1.Structured
-import VerifiedFipsCryptography.Equivalence.SHA1.StructuralEquiv
 import VerifiedFipsCryptography.Equivalence.SHA1.Lemmas
 import VerifiedFipsCryptography.ForBatteries
 
@@ -62,7 +61,8 @@ lemma process :
   let res_t := Translated.process state state_size chunk chunk_size
   ⟨res_t, Translated.process_size⟩ = res_l :=
 by
-  -- Need a hammer.
+  -- We need an arithmetic hammer to unroll the loop and grind out that all the operations
+  -- end up assigning the same values in the array.
   sorry
 
 lemma hash_to_vec_loop (index_size : index ≤ final_hash.size) :

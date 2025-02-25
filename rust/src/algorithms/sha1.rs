@@ -340,6 +340,8 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
 
     // Step 3: Calculate zero-padding length
     let len = padded_msg.len();
+    // let zero_padding_length = (56 - len % 64) % 64;
+    // TODO: highlight this change
     let zero_padding_length = (64 - len % 64 + 56) % 64;
 
     // Step 4: Append zero padding
@@ -398,8 +400,6 @@ fn hash(message: &[u8]) -> Vec<u8> {
 mod tests {
     use crate::algorithms::sha1;
 
-
-    // AES-128 Tests
     #[test]
     fn test_sha1() {
         println!("{:?}", sha1::hash(b"hello world hello world hello world hello world hello world "));
