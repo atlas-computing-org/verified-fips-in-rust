@@ -2,4 +2,5 @@
 -- Import modules here that should be built as part of the library.
 import «VerifiedFipsCryptography».Specs.Specs
 import «VerifiedFipsCryptography».RustTranslations.FipsImplementations
-import «VerifiedFipsCryptography».Equivalence.AES
+import «VerifiedFipsCryptography».Equivalence.AES.Equivalence
+import «VerifiedFipsCryptography».Equivalence.SHA1.Equivalence
