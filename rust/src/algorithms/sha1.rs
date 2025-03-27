@@ -340,8 +340,8 @@ fn pad_message(msg: &[u8]) -> Vec<u8> {
 
     // Step 3: Calculate zero-padding length
     let len = padded_msg.len();
+    // Change: See the # Learnings section in the README
     // let zero_padding_length = (56 - len % 64) % 64;
-    // TODO: highlight this change
     let zero_padding_length = (64 - len % 64 + 56) % 64;
 
     // Step 4: Append zero padding
