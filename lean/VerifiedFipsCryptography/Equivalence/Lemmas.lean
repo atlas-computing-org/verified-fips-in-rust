@@ -96,14 +96,6 @@ lemma Usize.le_max {x : ℕ} : x ≤ Usize.max ↔ x < USize.size := by
   simp [Usize.max, Usize.refined_max, Usize.smax, USize.size, System.Platform.numBits, System.Platform.getNumBits, *] <;>
   omega
 
-@[simp]
-lemma U8.ofUInt8_eq_aux (x : ℕ) [OfNat ℤ x] (h : Scalar.cMin ScalarTy.U8 ≤ (OfNat.ofNat x) ∧ (OfNat.ofNat x) ≤ Scalar.cMax ScalarTy.U8 := by decide) :
-    U8.ofInt (OfNat.ofNat x) h = (@OfNat.ofNat UInt8 x).toU8 :=
-by
-
-  simp [U8.ofInt, Scalar.ofInt, Scalar.ofIntCore, UInt8.toU8, UInt8.toNat]
-  sorry
-
 -- This is a set of unfortunate lemmas that are used to manually rewrite Aeneas' scalars.
 -- I've tried various things, and this seems to be an OK solution for now.
 -- A better one would be to write a tactic that goes in and applies these rewrites automatically.
