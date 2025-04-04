@@ -51,6 +51,9 @@ def sBox : Array UInt8 := #[
   0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 ]
 
+set_option maxRecDepth 1000 in
+@[simp] lemma sBox_size : sBox.size = 256 := by rfl
+
 -- Inverse S-box values (Table 5 from FIPS 197)
 def invSBox : Array UInt8 := #[
   0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
@@ -71,20 +74,25 @@ def invSBox : Array UInt8 := #[
   0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
 ]
 
+set_option maxRecDepth 1000 in
+@[simp] lemma invSBox_size : invSBox.size = 256 := by rfl
+
 -- Constants for key expansion
 def rcon : Array UInt8 := #[0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 
 -- Helper functions for key expansion
 def rotWord (word : Array UInt8) : Array UInt8 :=
   if word.size == 4 then
-    word[1:4] ++ word[0:1]
+    -- CHANGE: Using Lean's `Array.extract` is equivalent and is much easier to reason about.
+    word.extract 1 4 ++ word.extract 0 1
   else
     panic! s!"{word.size} is not a valid word size"
 
 def subWord (word : Array UInt8) : Array UInt8 :=
-  word.map (fun byte => sBox.get! byte.toNat)
+  word.map (fun byte => sBox[byte.toNat]'(by simp [byte.toNat_lt_size]))
 
 -- Key expansion function
+-- CHANGE: Using Lean's `Array.extract` is equivalent and is much easier to reason about.
 def keyExpansion (key : Array UInt8) (Nk Nr : Nat) : Array UInt8 := Id.run do
   let Nb := 4 -- Block size in words
   let totalWords := Nb * (Nr + 1)
@@ -92,20 +100,20 @@ def keyExpansion (key : Array UInt8) (Nk Nr : Nat) : Array UInt8 := Id.run do
 
   -- Copy the original key into the first Nk words
   for i in [0:Nk] do
-    w := w ++ (key[(4 * i):(4 * (i + 1))] : Array UInt8)
+    w := w ++ key.extract (4 * i) (4 * (i + 1))
 
   -- Expand the key schedule
   for i in [Nk:totalWords] do
-    let mut temp : Array UInt8 := w[(4 * (i - 1)):(4 * i)]
+    let mut temp : Array UInt8 := w.extract (4 * (i - 1)) (4 * i)
     if i % Nk == 0 then
       temp := subWord (rotWord temp)
-      temp := temp.zipWith #[rcon[(i / Nk) - 1]!, 0, 0, 0] (· ^^^ ·)
+      -- CHANGE: Using `set!` is equivalent and is much easier to reason about.
+      temp := temp.set! 0 (temp[0]! ^^^ rcon[(i / Nk) - 1]!)
     else if Nk > 6 && i % Nk == 4 then
       temp := subWord temp
-    let prevWord := w[(4 * (i - Nk)):(4 * (i - Nk + 1))]
+    let prevWord := w.extract (4 * (i - Nk)) (4 * (i - Nk + 1))
     temp := temp.zipWith prevWord (· ^^^ ·)
     w := w ++ temp
-
   w
 
 -- SubBytes
@@ -175,32 +183,34 @@ def addRoundKey (state : Array UInt8) (roundKey : Array UInt8) : Array UInt8 :=
   state.zipWith roundKey (· ^^^ ·)
 
 -- Cipher function
+-- CHANGE: Using Lean's `Array.extract` is equivalent and is much easier to reason about.
 def cipher (input : Array UInt8) (keySchedule : Array UInt8) (Nr : Nat) : Array UInt8 := Id.run do
   let mut state := input
-  state := addRoundKey state keySchedule[0:16]
+  state := addRoundKey state (keySchedule.extract 0 16)
   for round in [1:Nr] do
     state := subBytes state
     state := shiftRows state
     state := mixColumns state
-    state := addRoundKey state keySchedule[round * 16 : (round + 1) * 16]
+    state := addRoundKey state (keySchedule.extract (round * 16) ((round + 1) * 16))
   state := subBytes state
   state := shiftRows state
-  state := addRoundKey state keySchedule[Nr * 16 : (Nr + 1) * 16]
+  state := addRoundKey state (keySchedule.extract (Nr * 16) ((Nr + 1) * 16))
   state
 
 -- Inverse cipher function
+-- CHANGE: Using Lean's `Array.extract` is equivalent and is much easier to reason about.
 def invCipher (input : Array UInt8) (keySchedule : Array UInt8) (Nr : Nat) : Array UInt8 := Id.run do
   let mut state := input
-  state := addRoundKey state (keySchedule[Nr * 16 : (Nr + 1) * 16])
+  state := addRoundKey state (keySchedule.extract (Nr * 16) ((Nr + 1) * 16))
   for roundIdx in [1:Nr] do
     let round := Nr - roundIdx
     state := invShiftRows state
     state := invSubBytes state
-    state := addRoundKey state keySchedule[round * 16 : (round + 1) * 16]
+    state := addRoundKey state (keySchedule.extract (round * 16) ((round + 1) * 16))
     state := invMixColumns state
   state := invShiftRows state
   state := invSubBytes state
-  state := addRoundKey state (keySchedule[0:16])
+  state := addRoundKey state (keySchedule.extract 0 16)
   state
 
 -- AES-128 encryption

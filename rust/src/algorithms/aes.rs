@@ -15,7 +15,7 @@ fn xtime(b: u8) -> u8 {
 // Finite field GF(2^8) multiplication of `a` and `b`
 fn gf_mul(mut a: u8, mut b: u8) -> u8 {
     let mut result: u8 = 0;
-    let mut i = 0;
+    let mut i = 0usize;
     while i < 8 {
         if b & 0x01 == 0x01 {
             result ^= a;
@@ -94,6 +94,20 @@ fn copy_initial_key(w: &mut Vec<u8>, key: &[u8], nk: usize) {
     }
 }
 
+fn expand_key_schedule_inner(w: &mut Vec<u8>, nk: usize, i: usize, temp: [u8; 4]) {
+    let prev_word = [
+        w[(i - nk) * 4],
+        w[(i - nk) * 4 + 1],
+        w[(i - nk) * 4 + 2],
+        w[(i - nk) * 4 + 3],
+    ];
+
+    w.push(temp[0] ^ prev_word[0]);
+    w.push(temp[1] ^ prev_word[1]);
+    w.push(temp[2] ^ prev_word[2]);
+    w.push(temp[3] ^ prev_word[3]);
+}
+
 // Expand the key schedule
 fn expand_key_schedule(w: &mut Vec<u8>, nk: usize, total_words: usize) {
     let mut i = nk;
@@ -106,19 +120,8 @@ fn expand_key_schedule(w: &mut Vec<u8>, nk: usize, total_words: usize) {
         } else if nk > 6 && i % nk == 4 {
             temp = sub_word(&temp);
         }
-
-        let prev_word = [
-            w[(i - nk) * 4],
-            w[(i - nk) * 4 + 1],
-            w[(i - nk) * 4 + 2],
-            w[(i - nk) * 4 + 3],
-        ];
-
-        w.push(temp[0] ^ prev_word[0]);
-        w.push(temp[1] ^ prev_word[1]);
-        w.push(temp[2] ^ prev_word[2]);
-        w.push(temp[3] ^ prev_word[3]);
-
+        
+        expand_key_schedule_inner(w, nk, i, temp);
         i += 1;
     }
 }
@@ -272,9 +275,7 @@ fn extract_array_16(arr: &[u8], i: usize) -> [u8; 16] {
     ]
 }
 
-// AES Cipher (encryption) function
-fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
-    let mut state = add_round_key(input, &extract_array_16(key_schedule, 0));
+fn cipher_loop(mut state: [u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     let mut round = 1;
 
     // Clone the key_schedule to work around Aeneas's lack of support for nested borrows.
@@ -287,6 +288,15 @@ fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
         round += 1;
     }
 
+    state
+}
+
+// AES Cipher (encryption) function
+fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
+    let mut state = add_round_key(input, &extract_array_16(key_schedule, 0));
+
+    state = cipher_loop(state, key_schedule, nr);
+
     sub_bytes(&mut state);
     state = shift_rows(&state);
     state = add_round_key(&state, &extract_array_16(key_schedule, nr * 16));
@@ -294,9 +304,7 @@ fn cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     state
 }
 
-// AES Inverse Cipher (decryption) function
-fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
-    let mut state = add_round_key(&input, &extract_array_16(key_schedule, nr * 16));
+fn inv_cipher_loop(mut state: [u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
     let mut round_idx = 1;
 
     // Clone the key_schedule to work around Aeneas's lack of support for nested borrows.
@@ -309,6 +317,15 @@ fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
         state = inv_mix_columns(&state);
         round_idx += 1;
     }
+
+    state
+}
+
+// AES Inverse Cipher (decryption) function
+fn inv_cipher(input: &[u8; 16], key_schedule: &[u8], nr: usize) -> [u8; 16] {
+    let mut state = add_round_key(&input, &extract_array_16(key_schedule, nr * 16));
+
+    state = inv_cipher_loop(state, key_schedule, nr);
 
     state = inv_shift_rows(&state);
     inv_sub_bytes(&mut state);
@@ -519,4 +536,3 @@ mod tests {
         assert_eq!(aes256_inv(&aes256(&plain, &key), &key), plain);
     }
 }
-
